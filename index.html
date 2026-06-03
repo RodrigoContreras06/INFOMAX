@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Ciclos</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    color:#222;
+    padding-bottom:80px;
+}
+
+.header{
+    background:linear-gradient(135deg,#7b2cbf,#9d4edd);
+    color:white;
+    padding:25px;
+    border-radius:0 0 25px 25px;
+}
+
+.header h1{
+    font-size:24px;
+}
+
+.header p{
+    margin-top:5px;
+    opacity:.9;
+}
+
+.section{
+    padding:15px;
+}
+
+.section-title{
+    font-size:18px;
+    margin-bottom:10px;
+    font-weight:bold;
+}
+
+.alert-card{
+    background:white;
+    border-left:5px solid #ff595e;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+}
+
+.stat{
+    background:white;
+    border-radius:15px;
+    padding:15px;
+    text-align:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.stat-number{
+    font-size:26px;
+    font-weight:bold;
+}
+
+.person-card{
+    background:white;
+    border-radius:15px;
+    padding:15px;
+    margin-bottom:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.person-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.person-name{
+    font-size:18px;
+    font-weight:bold;
+}
+
+.status{
+    padding:6px 12px;
+    border-radius:20px;
+    color:white;
+    font-size:12px;
+}
+
+.ovulacion{
+    background:#e63946;
+}
+
+.fertil{
+    background:#2a9d8f;
+}
+
+.lutea{
+    background:#6a4c93;
+}
+
+.menstrual{
+    background:#457b9d;
+}
+
+.info{
+    margin-top:10px;
+    color:#555;
+}
+
+.bottom-nav{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    background:white;
+    display:flex;
+    justify-content:space-around;
+    padding:15px 0;
+    box-shadow:0 -2px 10px rgba(0,0,0,.1);
+}
+
+.nav-item{
+    text-align:center;
+    font-size:14px;
+}
+
+.fab{
+    position:fixed;
+    right:20px;
+    bottom:90px;
+    width:60px;
+    height:60px;
+    border:none;
+    border-radius:50%;
+    background:#7b2cbf;
+    color:white;
+    font-size:28px;
+    cursor:pointer;
+    box-shadow:0 4px 15px rgba(0,0,0,.25);
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Control de Ciclos</h1>
+    <p>03 Junio 2026</p>
+</div>
+
+<div class="section">
+    <div class="section-title">⚠ Atención Hoy</div>
+
+    <div class="alert-card">
+        🔴 Ana tiene ovulación estimada hoy
+    </div>
+
+    <div class="alert-card">
+        🟢 Laura entra en ventana fértil mañana
+    </div>
+
+    <div class="alert-card">
+        🟣 María debería iniciar periodo en 3 días
+    </div>
+</div>
+
+<div class="section">
+
+    <div class="section-title">Resumen General</div>
+
+    <div class="stats">
+
+        <div class="stat">
+            <div class="stat-number">1</div>
+            <div>Ovulación</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-number">2</div>
+            <div>Ventana fértil</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-number">1</div>
+            <div>Menstruación</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-number">3</div>
+            <div>Fase lútea</div>
+        </div>
+
+    </div>
+</div>
+
+<div class="section">
+
+    <div class="section-title">Personas Registradas</div>
+
+    <div class="person-card">
+
+        <div class="person-header">
+            <div class="person-name">Laura</div>
+            <div class="status fertil">Ventana fértil</div>
+        </div>
+
+        <div class="info">
+            Día ciclo: 12<br>
+            Confianza: 94%
+        </div>
+
+    </div>
+
+    <div class="person-card">
+
+        <div class="person-header">
+            <div class="person-name">Ana</div>
+            <div class="status ovulacion">Ovulación</div>
+        </div>
+
+        <div class="info">
+            Día ciclo: 14<br>
+            Confianza: 91%
+        </div>
+
+    </div>
+
+</div>
+
+<button class="fab">+</button>
+
+<div class="bottom-nav">
+
+    <div class="nav-item">🏠<br>Inicio</div>
+
+    <div class="nav-item">👥<br>Personas</div>
+
+    <div class="nav-item">⚙️<br>Ajustes</div>
+
+</div>
+
+</body>
+</html>
