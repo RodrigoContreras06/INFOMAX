@@ -287,7 +287,24 @@
 
             renderizarPersonas();
         }
+function obtenerEstado(dia){
 
+    if(dia <= 5){
+        return "Menstruación";
+    }
+
+    if(dia <= 10){
+        return "Folicular";
+    }
+
+    if(dia <= 15){
+        return "Ventana fértil";
+    }
+
+    return "Lútea";
+}
+
+        
 function calcularDiaCiclo(fecha){
 
     const hoy = new Date();
@@ -309,15 +326,34 @@ function calcularDiaCiclo(fecha){
             let html = "";
 
             personas.forEach(persona => {
+                const ultimoPeriodo =
+persona.periodos[
+    persona.periodos.length - 1
+];
+
+const diaCiclo =
+calcularDiaCiclo(
+    ultimoPeriodo
+);
                 html += `
+
+                
                 <div class="person-card">
                     <div class="person-header">
                         <div class="person-name">${persona.nombre}</div>
                         <div class="status lutea">Registrada</div>
                     </div>
-                    <div class="info">
-                        Último periodo: ${persona.periodos[persona.periodos.length - 1]}
-                    </div>
+                  <div class="info">
+
+    Día ciclo:
+    ${diaCiclo}
+
+    <br><br>
+
+    Último periodo:
+    ${ultimoPeriodo}
+
+</div>
                 </div>
                 `;
             });
