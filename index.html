@@ -288,6 +288,22 @@
             renderizarPersonas();
         }
 
+function calcularDiaCiclo(fecha){
+
+    const hoy = new Date();
+
+    const periodo =
+    new Date(fecha);
+
+    const diferencia =
+    Math.floor(
+        (hoy - periodo)
+        / (1000*60*60*24)
+    );
+
+    return diferencia + 1;
+}
+        
         function renderizarPersonas(){
             let contenedor = document.getElementById("listaPersonas");
             let html = "";
