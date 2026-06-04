@@ -152,9 +152,219 @@ body{
     cursor:pointer;
     box-shadow:0 4px 15px rgba(0,0,0,.25);
 }
+.modal{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,.5);
 
+    justify-content:center;
+    align-items:center;
+
+    z-index:999;
+}
+
+.modal-content{
+
+    background:white;
+    width:90%;
+    max-width:400px;
+
+    padding:20px;
+
+    border-radius:20px;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:10px;
+}
+
+.modal-content input{
+
+    padding:10px;
+
+    border:1px solid #ccc;
+
+    border-radius:10px;
+}
+
+.modal-content button{
+
+    padding:12px;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+}
+
+.modal-content button:first-of-type{
+    background:#7b2cbf;
+    color:white;
+}
+    
 </style>
 </head>
+    <!-- MODAL NUEVA PERSONA -->
+
+<div id="modalPersona" class="modal">
+
+    <div class="modal-content">
+
+        <h2>Nueva Persona</h2>
+
+        <label>Nombre</label>
+        <input type="text" id="nombrePersona">
+
+        <label>Primer periodo registrado</label>
+        <input type="date" id="fechaPeriodo">
+
+        <button onclick="guardarPersona()">
+            Guardar
+        </button>
+
+        <button onclick="cerrarModal()">
+            Cancelar
+        </button>
+
+    </div>
+
+</div>
+<script>
+
+let personas =
+JSON.parse(
+localStorage.getItem("personas")
+) || [];
+
+function abrirModal(){
+
+    document.getElementById(
+        "modalPersona"
+    ).style.display = "flex";
+}
+
+function cerrarModal(){
+
+    document.getElementById(
+        "modalPersona"
+    ).style.display = "none";
+}
+
+function guardarPersona(){
+
+    const nombre =
+    document.getElementById(
+        "nombrePersona"
+    ).value;
+
+    const fecha =
+    document.getElementById(
+        "fechaPeriodo"
+    ).value;
+
+    if(!nombre || !fecha){
+
+        alert(
+            "Completa todos los campos"
+        );
+
+        return;
+    }
+
+    const nuevaPersona = {
+
+        id: Date.now(),
+
+        nombre: nombre,
+
+        periodos: [fecha],
+
+        notas: ""
+    };
+
+    personas.push(
+        nuevaPersona
+    );
+
+    localStorage.setItem(
+        "personas",
+        JSON.stringify(personas)
+    );
+
+    cerrarModal();
+
+    document.getElementById(
+        "nombrePersona"
+    ).value = "";
+
+    document.getElementById(
+        "fechaPeriodo"
+    ).value = "";
+
+    renderizarPersonas();
+}
+
+function renderizarPersonas(){
+
+    let contenedor =
+    document.querySelector(
+        ".section:last-of-type"
+    );
+
+    let html =
+    `<div class="section-title">
+        Personas Registradas
+    </div>`;
+
+    personas.forEach(persona => {
+
+        html += `
+
+        <div class="person-card">
+
+            <div class="person-header">
+
+                <div class="person-name">
+
+                    ${persona.nombre}
+
+                </div>
+
+                <div class="status lutea">
+
+                    Registrada
+
+                </div>
+
+            </div>
+
+            <div class="info">
+
+                Último periodo:
+                ${persona.periodos[
+                    persona.periodos.length-1
+                ]}
+
+            </div>
+
+        </div>
+        `;
+    });
+
+    contenedor.innerHTML =
+    html;
+}
+
+renderizarPersonas();
+
+</script>
+    
 <body>
 
 <div class="header">
@@ -241,7 +451,9 @@ body{
 
 </div>
 
-<button class="fab">+</button>
+<button class="fab" onclick="abrirModal()">
++
+</button>
 
 <div class="bottom-nav">
 
