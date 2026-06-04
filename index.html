@@ -187,20 +187,21 @@
             background:#7b2cbf;
             color:white;
         }
-.btn-periodo{
-    background:#7b2cbf;
-    color:white;
-    border:none;
-    padding:10px 14px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:14px;
-}
 
-.btn-periodo:hover{
-    opacity:.9;
-}
-        
+        .btn-periodo{
+            background:#7b2cbf;
+            color:white;
+            border:none;
+            padding:10px 14px;
+            border-radius:10px;
+            cursor:pointer;
+            font-size:14px;
+            margin-top: 10px;
+        }
+
+        .btn-periodo:hover{
+            opacity:.9;
+        }
     </style>
 </head>
 <body>
@@ -242,7 +243,9 @@
     <div class="section">
         <div class="section-title">Personas Registradas</div>
         <div id="listaPersonas"></div>
-    </div> <button class="fab" onclick="abrirModal()">+</button>
+    </div> 
+
+    <button class="fab" onclick="abrirModal()">+</button>
 
     <div class="bottom-nav">
         <div class="nav-item">🏠<br>Inicio</div>
@@ -303,41 +306,35 @@
         }
 
         function registrarPeriodo(id){
+            // Obtener fecha de hoy en formato AAAA-MM-DD local
+            const hoy = new Date();
+            const hoyFormateado = hoy.getFullYear() + '-' + 
+                                  String(hoy.getMonth() + 1).padStart(2, '0') + '-' + 
+                                  String(hoy.getDate()).padStart(2, '0');
 
-    const fechaNueva =
-    prompt(
-        "Ingrese la fecha del nuevo periodo (AAAA-MM-DD)"
-    );
+            const fechaNueva = prompt("Ingrese la fecha del nuevo periodo (AAAA-MM-DD):", hoyFormateado);
 
-    if(!fechaNueva){
-        return;
-    }
+            if(!fechaNueva){
+                return;
+            }
 
-    const persona =
-    personas.find(
-        p => p.id === id
-    );
+            const persona = personas.find(p => p.id === id);
 
-    if(!persona){
-        return;
-    }
+            if(!persona){
+                return;
+            }
 
-    persona.periodos.push(
-        fechaNueva
-    );
+            persona.periodos.push(fechaNueva);
 
-    localStorage.setItem(
-        "personas",
-        JSON.stringify(personas)
-    );
+            // Ordenamos las fechas para asegurar que el último ingresado quede al final si el usuario mete fechas pasadas
+            persona.periodos.sort();
 
-    renderizarPersonas();
+            localStorage.setItem("personas", JSON.stringify(personas));
+            renderizarPersonas();
 
-    alert(
-        "Periodo registrado correctamente"
-    );
-}
-        // Retorna un objeto con el texto y la clase CSS correspondiente
+            alert("Periodo registrado correctamente");
+        }
+
         function obtenerEstado(dia){
             if(dia <= 5){
                 return { nombre: "Menstruación", clase: "menstruacion" };
@@ -359,19 +356,14 @@
         
         function calcularDiaCiclo(fecha){
             const hoy = new Date();
-            
-            // Reemplazar guiones por barras evita el bug de desfase de días en zonas horarias
             const fechaFormateada = fecha.replace(/-/g, '/');
             const periodo = new Date(fechaFormateada);
 
-            // Reseteamos las horas para calcular diferencias de días exactas
             hoy.setHours(0,0,0,0);
             periodo.setHours(0,0,0,0);
 
             const diferencia = Math.floor((hoy - periodo) / (1000 * 60 * 60 * 24));
             
-            // Suponiendo ciclos promedio de 28 días, usamos el operador residuo (%)
-            // Esto permite que si van 30 días, vuelva a empezar en el día 2 del ciclo.
             return (diferencia % 28) + 1;
         }
         
@@ -384,47 +376,29 @@
             personas.forEach(persona => {
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
-                
-                // Llamamos a la función para obtener el estado y la clase CSS real
                 const estado = obtenerEstado(diaCiclo);
 
-             html += `
-<div class="person-card">
-    <div class="person-header">
-        <div class="person-name">${persona.nombre}</div>
-        <div class="status ${estado.clase}">
-            ${estado.nombre}
-        </div>
-    </div>
+                html += `
+                <div class="person-card">
+                    <div class="person-header">
+                        <div class="person-name">${persona.nombre}</div>
+                        <div class="status ${estado.clase}">
+                            ${estado.nombre}
+                        </div>
+                    </div>
 
-    <div class="info">
-
-        <strong>Día ciclo:</strong> ${diaCiclo}<br>
-
-        <small style="color: #888;">
-            Último periodo: ${ultimoPeriodo}
-        </small>
-
-        <br><br>
-
-        <strong>
-            Historial:
-            ${persona.periodos.length}
-            registros
-        </strong>
-
-        <br><br>
-
-        <button
-            class="btn-periodo"
-            onclick="registrarPeriodo(${persona.id})"
-        >
-            ➕ Registrar periodo
-        </button>
-
-    </div>
-</div>
-`;
+                    <div class="info">
+                        <strong>Día ciclo:</strong> ${diaCiclo}<br>
+                        <small style="color: #888;">
+                            Último periodo: ${ultimoPeriodo}
+                        </small>
+                        <br><br>
+                        <strong>Historial:</strong> ${persona.periodos.length} registros
+                        <br>
+                        <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">
+                            ➕ Registrar periodo
+                        </button>
+                    </div>
                 </div>
                 `;
             });
