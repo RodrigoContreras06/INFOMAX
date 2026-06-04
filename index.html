@@ -1,462 +1,339 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control de Ciclos</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Ciclos</title>
 
-<style>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, sans-serif;
+        }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial, sans-serif;
-}
+        body{
+            background:#f4f6f9;
+            color:#222;
+            padding-bottom:80px;
+        }
 
-body{
-    background:#f4f6f9;
-    color:#222;
-    padding-bottom:80px;
-}
+        .header{
+            background:linear-gradient(135deg,#7b2cbf,#9d4edd);
+            color:white;
+            padding:25px;
+            border-radius:0 0 25px 25px;
+        }
 
-.header{
-    background:linear-gradient(135deg,#7b2cbf,#9d4edd);
-    color:white;
-    padding:25px;
-    border-radius:0 0 25px 25px;
-}
+        .header h1{
+            font-size:24px;
+        }
 
-.header h1{
-    font-size:24px;
-}
+        .header p{
+            margin-top:5px;
+            opacity:.9;
+        }
 
-.header p{
-    margin-top:5px;
-    opacity:.9;
-}
+        .section{
+            padding:15px;
+        }
 
-.section{
-    padding:15px;
-}
+        .section-title{
+            font-size:18px;
+            margin-bottom:10px;
+            font-weight:bold;
+        }
 
-.section-title{
-    font-size:18px;
-    margin-bottom:10px;
-    font-weight:bold;
-}
+        .alert-card{
+            background:white;
+            border-left:5px solid #ff595e;
+            padding:12px;
+            border-radius:12px;
+            margin-bottom:10px;
+            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        }
 
-.alert-card{
-    background:white;
-    border-left:5px solid #ff595e;
-    padding:12px;
-    border-radius:12px;
-    margin-bottom:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
+        .stats{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:10px;
+        }
 
-.stats{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
-}
+        .stat{
+            background:white;
+            border-radius:15px;
+            padding:15px;
+            text-align:center;
+            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        }
 
-.stat{
-    background:white;
-    border-radius:15px;
-    padding:15px;
-    text-align:center;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
+        .stat-number{
+            font-size:26px;
+            font-weight:bold;
+        }
 
-.stat-number{
-    font-size:26px;
-    font-weight:bold;
-}
+        .person-card{
+            background:white;
+            border-radius:15px;
+            padding:15px;
+            margin-bottom:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        }
 
-.person-card{
-    background:white;
-    border-radius:15px;
-    padding:15px;
-    margin-bottom:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
+        .person-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
 
-.person-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
+        .person-name{
+            font-size:18px;
+            font-weight:bold;
+        }
 
-.person-name{
-    font-size:18px;
-    font-weight:bold;
-}
+        .status{
+            padding:6px 12px;
+            border-radius:20px;
+            color:white;
+            font-size:12px;
+        }
 
-.status{
-    padding:6px 12px;
-    border-radius:20px;
-    color:white;
-    font-size:12px;
-}
+        .ovulacion{ background:#e63946; }
+        .fertil{ background:#2a9d8f; }
+        .lutea{ background:#6a4c93; }
+        .menstrual{ background:#457b9d; }
 
-.ovulacion{
-    background:#e63946;
-}
+        .info{
+            margin-top:10px;
+            color:#555;
+        }
 
-.fertil{
-    background:#2a9d8f;
-}
+        .bottom-nav{
+            position:fixed;
+            bottom:0;
+            left:0;
+            width:100%;
+            background:white;
+            display:flex;
+            justify-content:space-around;
+            padding:15px 0;
+            box-shadow:0 -2px 10px rgba(0,0,0,.1);
+            z-index: 10;
+        }
 
-.lutea{
-    background:#6a4c93;
-}
+        .nav-item{
+            text-align:center;
+            font-size:14px;
+        }
 
-.menstrual{
-    background:#457b9d;
-}
+        .fab{
+            position:fixed;
+            right:20px;
+            bottom:90px;
+            width:60px;
+            height:60px;
+            border:none;
+            border-radius:50%;
+            background:#7b2cbf;
+            color:white;
+            font-size:28px;
+            cursor:pointer;
+            box-shadow:0 4px 15px rgba(0,0,0,.25);
+            z-index: 10;
+        }
 
-.info{
-    margin-top:10px;
-    color:#555;
-}
+        .modal{
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,.5);
+            justify-content:center;
+            align-items:center;
+            z-index:999;
+        }
 
-.bottom-nav{
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    background:white;
-    display:flex;
-    justify-content:space-around;
-    padding:15px 0;
-    box-shadow:0 -2px 10px rgba(0,0,0,.1);
-}
+        .modal-content{
+            background:white;
+            width:90%;
+            max-width:400px;
+            padding:20px;
+            border-radius:20px;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
 
-.nav-item{
-    text-align:center;
-    font-size:14px;
-}
+        .modal-content input{
+            padding:10px;
+            border:1px solid #ccc;
+            border-radius:10px;
+        }
 
-.fab{
-    position:fixed;
-    right:20px;
-    bottom:90px;
-    width:60px;
-    height:60px;
-    border:none;
-    border-radius:50%;
-    background:#7b2cbf;
-    color:white;
-    font-size:28px;
-    cursor:pointer;
-    box-shadow:0 4px 15px rgba(0,0,0,.25);
-}
-.modal{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,.5);
+        .modal-content button{
+            padding:12px;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+        }
 
-    justify-content:center;
-    align-items:center;
-
-    z-index:999;
-}
-
-.modal-content{
-
-    background:white;
-    width:90%;
-    max-width:400px;
-
-    padding:20px;
-
-    border-radius:20px;
-
-    display:flex;
-    flex-direction:column;
-
-    gap:10px;
-}
-
-.modal-content input{
-
-    padding:10px;
-
-    border:1px solid #ccc;
-
-    border-radius:10px;
-}
-
-.modal-content button{
-
-    padding:12px;
-
-    border:none;
-
-    border-radius:10px;
-
-    cursor:pointer;
-}
-
-.modal-content button:first-of-type{
-    background:#7b2cbf;
-    color:white;
-}
-    
-</style>
+        .modal-content button:first-of-type{
+            background:#7b2cbf;
+            color:white;
+        }
+    </style>
 </head>
-    <!-- MODAL NUEVA PERSONA -->
-
-<div id="modalPersona" class="modal">
-
-    <div class="modal-content">
-
-        <h2>Nueva Persona</h2>
-
-        <label>Nombre</label>
-        <input type="text" id="nombrePersona">
-
-        <label>Primer periodo registrado</label>
-        <input type="date" id="fechaPeriodo">
-
-        <button onclick="guardarPersona()">
-            Guardar
-        </button>
-
-        <button onclick="cerrarModal()">
-            Cancelar
-        </button>
-
-    </div>
-
-</div>
-<script>
-
-let personas =
-JSON.parse(
-localStorage.getItem("personas")
-) || [];
-
-function abrirModal(){
-
-    document.getElementById(
-        "modalPersona"
-    ).style.display = "flex";
-}
-
-function cerrarModal(){
-
-    document.getElementById(
-        "modalPersona"
-    ).style.display = "none";
-}
-
-function guardarPersona(){
-
-    const nombre =
-    document.getElementById(
-        "nombrePersona"
-    ).value;
-
-    const fecha =
-    document.getElementById(
-        "fechaPeriodo"
-    ).value;
-
-    if(!nombre || !fecha){
-
-        alert(
-            "Completa todos los campos"
-        );
-
-        return;
-    }
-
-    const nuevaPersona = {
-
-        id: Date.now(),
-
-        nombre: nombre,
-
-        periodos: [fecha],
-
-        notas: ""
-    };
-
-    personas.push(
-        nuevaPersona
-    );
-
-    localStorage.setItem(
-        "personas",
-        JSON.stringify(personas)
-    );
-
-    cerrarModal();
-
-    document.getElementById(
-        "nombrePersona"
-    ).value = "";
-
-    document.getElementById(
-        "fechaPeriodo"
-    ).value = "";
-
-    renderizarPersonas();
-}
-
-function renderizarPersonas(){
-
-    let contenedor =
-    document.getElementById("listaPersonas");
-
-    let html = "";
-
-    personas.forEach(persona => {
-
-        html += `
-        <div class="person-card">
-
-            <div class="person-header">
-
-                <div class="person-name">
-                    ${persona.nombre}
-                </div>
-
-                <div class="status lutea">
-                    Registrada
-                </div>
-
-            </div>
-
-            <div class="info">
-                Último periodo:
-                ${persona.periodos[
-                    persona.periodos.length - 1
-                ]}
-            </div>
-
-        </div>
-        `;
-    });
-
-    contenedor.innerHTML = html;
-}
-
-renderizarPersonas();
-
-</script>
-    
 <body>
 
-<div class="header">
-    <h1>Control de Ciclos</h1>
-    <p>03 Junio 2026</p>
-</div>
-
-<div class="section">
-    <div class="section-title">⚠ Atención Hoy</div>
-
-    <div class="alert-card">
-        🔴 Ana tiene ovulación estimada hoy
+    <div class="header">
+        <h1>Control de Ciclos</h1>
+        <p>03 Junio 2026</p>
     </div>
 
-    <div class="alert-card">
-        🟢 Laura entra en ventana fértil mañana
+    <div class="section">
+        <div class="section-title">⚠ Atención Hoy</div>
+        <div class="alert-card">🔴 Ana tiene ovulación estimada hoy</div>
+        <div class="alert-card">🟢 Laura entra en ventana fértil mañana</div>
+        <div class="alert-card">🟣 María debería iniciar periodo en 3 días</div>
     </div>
 
-    <div class="alert-card">
-        🟣 María debería iniciar periodo en 3 días
-    </div>
-</div>
-
-<div class="section">
-
-    <div class="section-title">Resumen General</div>
-
-    <div class="stats">
-
-        <div class="stat">
-            <div class="stat-number">1</div>
-            <div>Ovulación</div>
+    <div class="section">
+        <div class="section-title">Resumen General</div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">1</div>
+                <div>Ovulación</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2</div>
+                <div>Ventana fértil</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">1</div>
+                <div>Menstruación</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">3</div>
+                <div>Fase lútea</div>
+            </div>
         </div>
-
-        <div class="stat">
-            <div class="stat-number">2</div>
-            <div>Ventana fértil</div>
-        </div>
-
-        <div class="stat">
-            <div class="stat-number">1</div>
-            <div>Menstruación</div>
-        </div>
-
-        <div class="stat">
-            <div class="stat-number">3</div>
-            <div>Fase lútea</div>
-        </div>
-
-    </div>
-</div>
-
-<div class="section">
-
-    <div class="section-title">
-        Personas Registradas
     </div>
 
-    <div id="listaPersonas">
+    <div class="section">
+        <div class="section-title">Personas Registradas</div>
+        
+        <div id="listaPersonas"></div>
 
+        <div class="person-card">
+            <div class="person-header">
+                <div class="person-name">Laura</div>
+                <div class="status fertil">Ventana fértil</div>
+            </div>
+            <div class="info">
+                Día ciclo: 12<br>
+                Confianza: 94%
+            </div>
+        </div>
+
+        <div class="person-card">
+            <div class="person-header">
+                <div class="person-name">Ana</div>
+                <div class="status ovulacion">Ovulación</div>
+            </div>
+            <div class="info">
+                Día ciclo: 14<br>
+                Confianza: 91%
+            </div>
+        </div>
     </div>
 
-</div>
+    <button class="fab" onclick="abrirModal()">+</button>
 
-        <div class="person-header">
-            <div class="person-name">Laura</div>
-            <div class="status fertil">Ventana fértil</div>
-        </div>
-
-        <div class="info">
-            Día ciclo: 12<br>
-            Confianza: 94%
-        </div>
-
+    <div class="bottom-nav">
+        <div class="nav-item">🏠<br>Inicio</div>
+        <div class="nav-item">👥<br>Personas</div>
+        <div class="nav-item">⚙️<br>Ajustes</div>
     </div>
 
-    <div class="person-card">
+    <div id="modalPersona" class="modal">
+        <div class="modal-content">
+            <h2>Nueva Persona</h2>
+            <label for="nombrePersona">Nombre</label>
+            <input type="text" id="nombrePersona">
 
-        <div class="person-header">
-            <div class="person-name">Ana</div>
-            <div class="status ovulacion">Ovulación</div>
+            <label for="fechaPeriodo">Primer periodo registrado</label>
+            <input type="date" id="fechaPeriodo">
+
+            <button onclick="guardarPersona()">Guardar</button>
+            <button onclick="cerrarModal()">Cancelar</button>
         </div>
-
-        <div class="info">
-            Día ciclo: 14<br>
-            Confianza: 91%
-        </div>
-
     </div>
 
-</div>
+    <script>
+        let personas = JSON.parse(localStorage.getItem("personas")) || [];
 
-<button class="fab" onclick="abrirModal()">
-+
-</button>
+        function abrirModal(){
+            document.getElementById("modalPersona").style.display = "flex";
+        }
 
-<div class="bottom-nav">
+        function cerrarModal(){
+            document.getElementById("modalPersona").style.display = "none";
+        }
 
-    <div class="nav-item">🏠<br>Inicio</div>
+        function guardarPersona(){
+            const nombre = document.getElementById("nombrePersona").value;
+            const fecha = document.getElementById("fechaPeriodo").value;
 
-    <div class="nav-item">👥<br>Personas</div>
+            if(!nombre || !fecha){
+                alert("Completa todos los campos");
+                return;
+            }
 
-    <div class="nav-item">⚙️<br>Ajustes</div>
+            const nuevaPersona = {
+                id: Date.now(),
+                nombre: nombre,
+                periodos: [fecha],
+                notas: ""
+            };
 
-</div>
+            personas.push(nuevaPersona);
+            localStorage.setItem("personas", JSON.stringify(personas));
 
+            cerrarModal();
+
+            // Limpiar inputs
+            document.getElementById("nombrePersona").value = "";
+            document.getElementById("fechaPeriodo").value = "";
+
+            renderizarPersonas();
+        }
+
+        function renderizarPersonas(){
+            let contenedor = document.getElementById("listaPersonas");
+            let html = "";
+
+            personas.forEach(persona => {
+                html += `
+                <div class="person-card">
+                    <div class="person-header">
+                        <div class="person-name">${persona.nombre}</div>
+                        <div class="status lutea">Registrada</div>
+                    </div>
+                    <div class="info">
+                        Último periodo: ${persona.periodos[persona.periodos.length - 1]}
+                    </div>
+                </div>
+                `;
+            });
+
+            contenedor.innerHTML = html;
+        }
+
+        // Ejecutar al cargar la página
+        renderizarPersonas();
+    </script>
 </body>
 </html>
