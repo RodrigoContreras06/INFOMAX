@@ -313,14 +313,20 @@ function guardarPersona(){
 function renderizarPersonas(){
 
     let contenedor =
-    document.querySelector(
-        ".section:last-of-type"
-    );
+    document.getElementById("listaPersonas"));
 
     let html =
-    `<div class="section-title">
+<div class="section">
+
+    <div class="section-title">
         Personas Registradas
-    </div>`;
+    </div>
+
+    <div id="listaPersonas">
+
+    </div>
+
+</div>;
 
     personas.forEach(persona => {
 
