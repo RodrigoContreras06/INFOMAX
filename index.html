@@ -187,6 +187,20 @@
             background:#7b2cbf;
             color:white;
         }
+.btn-periodo{
+    background:#7b2cbf;
+    color:white;
+    border:none;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+.btn-periodo:hover{
+    opacity:.9;
+}
+        
     </style>
 </head>
 <body>
@@ -288,6 +302,41 @@
             renderizarPersonas();
         }
 
+        function registrarPeriodo(id){
+
+    const fechaNueva =
+    prompt(
+        "Ingrese la fecha del nuevo periodo (AAAA-MM-DD)"
+    );
+
+    if(!fechaNueva){
+        return;
+    }
+
+    const persona =
+    personas.find(
+        p => p.id === id
+    );
+
+    if(!persona){
+        return;
+    }
+
+    persona.periodos.push(
+        fechaNueva
+    );
+
+    localStorage.setItem(
+        "personas",
+        JSON.stringify(personas)
+    );
+
+    renderizarPersonas();
+
+    alert(
+        "Periodo registrado correctamente"
+    );
+}
         // Retorna un objeto con el texto y la clase CSS correspondiente
         function obtenerEstado(dia){
             if(dia <= 5){
@@ -339,16 +388,43 @@
                 // Llamamos a la función para obtener el estado y la clase CSS real
                 const estado = obtenerEstado(diaCiclo);
 
-                html += `
-                <div class="person-card">
-                    <div class="person-header">
-                        <div class="person-name">${persona.nombre}</div>
-                        <div class="status ${estado.clase}">${estado.nombre}</div>
-                    </div>
-                    <div class="info">
-                        <strong>Día ciclo:</strong> ${diaCiclo}<br>
-                        <small style="color: #888;">Último periodo: ${ultimoPeriodo}</small>
-                    </div>
+             html += `
+<div class="person-card">
+    <div class="person-header">
+        <div class="person-name">${persona.nombre}</div>
+        <div class="status ${estado.clase}">
+            ${estado.nombre}
+        </div>
+    </div>
+
+    <div class="info">
+
+        <strong>Día ciclo:</strong> ${diaCiclo}<br>
+
+        <small style="color: #888;">
+            Último periodo: ${ultimoPeriodo}
+        </small>
+
+        <br><br>
+
+        <strong>
+            Historial:
+            ${persona.periodos.length}
+            registros
+        </strong>
+
+        <br><br>
+
+        <button
+            class="btn-periodo"
+            onclick="registrarPeriodo(${persona.id})"
+        >
+            ➕ Registrar periodo
+        </button>
+
+    </div>
+</div>
+`;
                 </div>
                 `;
             });
