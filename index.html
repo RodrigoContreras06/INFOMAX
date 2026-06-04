@@ -313,58 +313,39 @@ function guardarPersona(){
 function renderizarPersonas(){
 
     let contenedor =
-    document.getElementById("listaPersonas"));
+    document.getElementById("listaPersonas");
 
-    let html =
-<div class="section">
-
-    <div class="section-title">
-        Personas Registradas
-    </div>
-
-    <div id="listaPersonas">
-
-    </div>
-
-</div>;
+    let html = "";
 
     personas.forEach(persona => {
 
         html += `
-
         <div class="person-card">
 
             <div class="person-header">
 
                 <div class="person-name">
-
                     ${persona.nombre}
-
                 </div>
 
                 <div class="status lutea">
-
                     Registrada
-
                 </div>
 
             </div>
 
             <div class="info">
-
                 Último periodo:
                 ${persona.periodos[
-                    persona.periodos.length-1
+                    persona.periodos.length - 1
                 ]}
-
             </div>
 
         </div>
         `;
     });
 
-    contenedor.innerHTML =
-    html;
+    contenedor.innerHTML = html;
 }
 
 renderizarPersonas();
@@ -425,9 +406,15 @@ renderizarPersonas();
 
 <div class="section">
 
-    <div class="section-title">Personas Registradas</div>
+    <div class="section-title">
+        Personas Registradas
+    </div>
 
-    <div class="person-card">
+    <div id="listaPersonas">
+
+    </div>
+
+</div>
 
         <div class="person-header">
             <div class="person-name">Laura</div>
