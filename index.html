@@ -106,6 +106,7 @@
         .lutea { background:#6a4c93; }
         .menstruacion { background:#457b9d; }
         .folicular { background:#f4a261; }
+        .atraso { background:#555555; }
 
         .info{
             margin-top:10px;
@@ -208,33 +209,31 @@
 
     <div class="header">
         <h1>Control de Ciclos</h1>
-        <p>04 Junio 2026</p>
+        <p id="fechaActualHeader">04 Junio 2026</p>
     </div>
 
     <div class="section">
         <div class="section-title">⚠ Atención Hoy</div>
-        <div class="alert-card">🔴 Ana tiene ovulación estimada hoy</div>
-        <div class="alert-card">🟢 Laura entra en ventana fértil mañana</div>
-        <div class="alert-card">🟣 María debería iniciar periodo en 3 días</div>
+        <div id="contenedorAlertas"></div>
     </div>
 
     <div class="section">
         <div class="section-title">Resumen General</div>
         <div class="stats">
             <div class="stat">
-                <div class="stat-number">1</div>
+                <div class="stat-number" id="count-ovulacion">0</div>
                 <div>Ovulación</div>
             </div>
             <div class="stat">
-                <div class="stat-number">2</div>
+                <div class="stat-number" id="count-fertil">0</div>
                 <div>Ventana fértil</div>
             </div>
             <div class="stat">
-                <div class="stat-number">1</div>
+                <div class="stat-number" id="count-menstruacion">0</div>
                 <div>Menstruación</div>
             </div>
             <div class="stat">
-                <div class="stat-number">3</div>
+                <div class="stat-number" id="count-lutea">0</div>
                 <div>Fase lútea</div>
             </div>
         </div>
@@ -246,6 +245,15 @@
     </div> 
 
     <button class="fab" onclick="abrirModal()">+</button>
+
+    <div id="modalPeriodo" class="modal">
+        <div class="modal-content">
+            <h2>Registrar Periodo</h2>
+            <input type="date" id="fechaNuevoPeriodo">
+            <button onclick="guardarNuevoPeriodo()">Guardar</button>
+            <button onclick="cerrarModalPeriodo()">Cancelar</button>
+        </div>
+    </div>
 
     <div class="bottom-nav">
         <div class="nav-item">🏠<br>Inicio</div>
@@ -269,6 +277,11 @@
 
     <script>
         let personas = JSON.parse(localStorage.getItem("personas")) || [];
+        let personaSeleccionada = null;
+
+        // Poner la fecha de hoy automáticamente en el header superior
+        const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
+        document.getElementById("fechaActualHeader").innerText = new Date().toLocaleDateString('es-ES', opcionesFecha);
 
         function abrirModal(){
             document.getElementById("modalPersona").style.display = "flex";
@@ -302,56 +315,74 @@
             document.getElementById("nombrePersona").value = "";
             document.getElementById("fechaPeriodo").value = "";
 
-            renderizarPersonas();
+            actualizarTodo();
         }
 
         function registrarPeriodo(id){
-            // Obtener fecha de hoy en formato AAAA-MM-DD local
+            personaSeleccionada = id;
+            
+            // Pre-cargar la fecha de hoy en el input del modal
             const hoy = new Date();
             const hoyFormateado = hoy.getFullYear() + '-' + 
                                   String(hoy.getMonth() + 1).padStart(2, '0') + '-' + 
                                   String(hoy.getDate()).padStart(2, '0');
+            document.getElementById("fechaNuevoPeriodo").value = hoyFormateado;
 
-            const fechaNueva = prompt("Ingrese la fecha del nuevo periodo (AAAA-MM-DD):", hoyFormateado);
+            document.getElementById("modalPeriodo").style.display = "flex";
+        }
+
+        function cerrarModalPeriodo(){
+            document.getElementById("modalPeriodo").style.display = "none";
+        }
+
+        function guardarNuevoPeriodo(){
+            const fechaNueva = document.getElementById("fechaNuevoPeriodo").value;
 
             if(!fechaNueva){
+                alert("Seleccione una fecha");
                 return;
             }
 
-            const persona = personas.find(p => p.id === id);
+            const persona = personas.find(p => p.id === personaSeleccionada);
 
             if(!persona){
                 return;
             }
 
-            persona.periodos.push(fechaNueva);
-
-            // Ordenamos las fechas para asegurar que el último ingresado quede al final si el usuario mete fechas pasadas
-            persona.periodos.sort();
+            // Evitar duplicar la misma fecha en el historial
+            if(!persona.periodos.includes(fechaNueva)) {
+                persona.periodos.push(fechaNueva);
+                persona.periodos.sort();
+            }
 
             localStorage.setItem("personas", JSON.stringify(personas));
-            renderizarPersonas();
 
-            alert("Periodo registrado correctamente");
+            cerrarModalPeriodo();
+            document.getElementById("fechaNuevoPeriodo").value = "";
+
+            actualizarTodo();
         }
-
+        
         function obtenerEstado(dia){
             if(dia <= 5){
-                return { nombre: "Menstruación", clase: "menstruacion" };
+                return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
             }
             if(dia <= 10){
-                return { nombre: "Folicular", clase: "folicular" };
+                return { nombre: "Folicular", clase: "folicular", idClave: "folicular" };
             }
             if(dia <= 13){
-                return { nombre: "Ventana fértil", clase: "fertil" };
+                return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
             }
             if(dia === 14){
-                return { nombre: "Ovulación", clase: "ovulacion" };
+                return { nombre: "Ovulación", clase: "ovulacion", idClave: "ovulacion" };
             }
             if(dia <= 16){
-                return { nombre: "Ventana fértil", clase: "fertil" };
+                return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
             }
-            return { nombre: "Fase Lútea", clase: "lutea" };
+            if(dia <= 28){
+                return { nombre: "Fase Lútea", clase: "lutea", idClave: "lutea" };
+            }
+            return { nombre: "Posible Retraso", clase: "atraso", idClave: "atraso" };
         }
         
         function calcularDiaCiclo(fecha){
@@ -364,19 +395,41 @@
 
             const diferencia = Math.floor((hoy - periodo) / (1000 * 60 * 60 * 24));
             
-            return (diferencia % 28) + 1;
+            // Retorna los días reales transcurridos
+            return diferencia + 1;
         }
         
-        function renderizarPersonas(){
+        function actualizarTodo(){
             let contenedor = document.getElementById("listaPersonas");
+            let contenedorAlertas = document.getElementById("contenedorAlertas");
             if (!contenedor) return;
             
             let html = "";
+            let htmlAlertas = "";
+
+            // Contadores para el área de estadísticas
+            let conteos = { ovulacion: 0, fertil: 0, menstruacion: 0, lutea: 0 };
 
             personas.forEach(persona => {
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 const estado = obtenerEstado(diaCiclo);
+
+                // Incrementar contadores globales si corresponde al tipo
+                if(conteos.hasOwnProperty(estado.idClave)){
+                    conteos[estado.idClave]++;
+                }
+
+                // Generar alertas dinámicas de atención para hoy
+                if(estado.idClave === "ovulacion"){
+                    htmlAlertas += `<div class="alert-card">🔴 <strong>${persona.nombre}</strong> tiene ovulación estimada hoy (Día ${diaCiclo})</div>`;
+                } else if (diaCiclo === 11) {
+                    htmlAlertas += `<div class="alert-card">🟢 <strong>${persona.nombre}</strong> entra en ventana fértil mañana</div>`;
+                } else if (diaCiclo === 26) {
+                    htmlAlertas += `<div class="alert-card">🟣 <strong>${persona.nombre}</strong> debería iniciar su periodo en 3 días</div>`;
+                } else if (estado.idClave === "atraso") {
+                    htmlAlertas += `<div class="alert-card" style="border-left-color: #555;">⚠ <strong>${persona.nombre}</strong> presenta un retraso (Día ${diaCiclo})</div>`;
+                }
 
                 html += `
                 <div class="person-card">
@@ -403,11 +456,21 @@
                 `;
             });
 
+            // Pintar tarjetas de personas
             contenedor.innerHTML = html || "<p style='color:#888; text-align:center;'>No hay personas registradas.</p>";
+            
+            // Pintar alertas automáticas
+            contenedorAlertas.innerHTML = htmlAlertas || "<div class='alert-card' style='border-left-color: #2a9d8f;'>✅ No hay alertas ni novedades críticas para hoy.</div>";
+
+            // Actualizar bloques del resumen numérico superior
+            document.getElementById("count-ovulacion").innerText = conteos.ovulacion;
+            document.getElementById("count-fertil").innerText = conteos.fertil;
+            document.getElementById("count-menstruacion").innerText = conteos.menstruacion;
+            document.getElementById("count-lutea").innerText = conteos.lutea;
         }
 
-        // Ejecutar al cargar la página
-        renderizarPersonas();
+        // Ejecutar carga inicial
+        actualizarTodo();
     </script>
 </body>
 </html>
