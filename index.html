@@ -97,12 +97,15 @@
             border-radius:20px;
             color:white;
             font-size:12px;
+            font-weight: bold;
         }
 
-        .ovulacion{ background:#e63946; }
-        .fertil{ background:#2a9d8f; }
-        .lutea{ background:#6a4c93; }
-        .menstrual{ background:#457b9d; }
+        /* Clases CSS dinámicas para los estados */
+        .ovulacion { background:#e63946; }
+        .fertil { background:#2a9d8f; }
+        .lutea { background:#6a4c93; }
+        .menstruacion { background:#457b9d; }
+        .folicular { background:#f4a261; }
 
         .info{
             margin-top:10px;
@@ -190,7 +193,7 @@
 
     <div class="header">
         <h1>Control de Ciclos</h1>
-        <p>03 Junio 2026</p>
+        <p>04 Junio 2026</p>
     </div>
 
     <div class="section">
@@ -224,10 +227,8 @@
 
     <div class="section">
         <div class="section-title">Personas Registradas</div>
-        
         <div id="listaPersonas"></div>
-
-    <button class="fab" onclick="abrirModal()">+</button>
+    </div> <button class="fab" onclick="abrirModal()">+</button>
 
     <div class="bottom-nav">
         <div class="nav-item">🏠<br>Inicio</div>
@@ -273,7 +274,7 @@
                 id: Date.now(),
                 nombre: nombre,
                 periodos: [fecha],
-                notas: ""
+                notes: ""
             };
 
             personas.push(nuevaPersona);
@@ -281,84 +282,78 @@
 
             cerrarModal();
 
-            // Limpiar inputs
             document.getElementById("nombrePersona").value = "";
             document.getElementById("fechaPeriodo").value = "";
 
             renderizarPersonas();
         }
-function obtenerEstado(dia){
 
-    if(dia <= 5){
-        return "Menstruación";
-    }
-
-    if(dia <= 10){
-        return "Folicular";
-    }
-
-    if(dia <= 15){
-        return "Ventana fértil";
-    }
-
-    return "Lútea";
-}
-
+        // Retorna un objeto con el texto y la clase CSS correspondiente
+        function obtenerEstado(dia){
+            if(dia <= 5){
+                return { nombre: "Menstruación", clase: "menstruacion" };
+            }
+            if(dia <= 10){
+                return { nombre: "Folicular", clase: "folicular" };
+            }
+            if(dia <= 13){
+                return { nombre: "Ventana fértil", clase: "fertil" };
+            }
+            if(dia === 14){
+                return { nombre: "Ovulación", clase: "ovulacion" };
+            }
+            if(dia <= 16){
+                return { nombre: "Ventana fértil", clase: "fertil" };
+            }
+            return { nombre: "Fase Lútea", clase: "lutea" };
+        }
         
-function calcularDiaCiclo(fecha){
+        function calcularDiaCiclo(fecha){
+            const hoy = new Date();
+            
+            // Reemplazar guiones por barras evita el bug de desfase de días en zonas horarias
+            const fechaFormateada = fecha.replace(/-/g, '/');
+            const periodo = new Date(fechaFormateada);
 
-    const hoy = new Date();
+            // Reseteamos las horas para calcular diferencias de días exactas
+            hoy.setHours(0,0,0,0);
+            periodo.setHours(0,0,0,0);
 
-    const periodo =
-    new Date(fecha);
-
-    const diferencia =
-    Math.floor(
-        (hoy - periodo)
-        / (1000*60*60*24)
-    );
-
-    return diferencia + 1;
-}
+            const diferencia = Math.floor((hoy - periodo) / (1000 * 60 * 60 * 24));
+            
+            // Suponiendo ciclos promedio de 28 días, usamos el operador residuo (%)
+            // Esto permite que si van 30 días, vuelva a empezar en el día 2 del ciclo.
+            return (diferencia % 28) + 1;
+        }
         
         function renderizarPersonas(){
             let contenedor = document.getElementById("listaPersonas");
+            if (!contenedor) return;
+            
             let html = "";
 
             personas.forEach(persona => {
-                const ultimoPeriodo =
-persona.periodos[
-    persona.periodos.length - 1
-];
-
-const diaCiclo =
-calcularDiaCiclo(
-    ultimoPeriodo
-);
-                html += `
-
+                const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
+                const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 
+                // Llamamos a la función para obtener el estado y la clase CSS real
+                const estado = obtenerEstado(diaCiclo);
+
+                html += `
                 <div class="person-card">
                     <div class="person-header">
                         <div class="person-name">${persona.nombre}</div>
-                        <div class="status lutea">Registrada</div>
+                        <div class="status ${estado.clase}">${estado.nombre}</div>
                     </div>
-                  <div class="info">
-
-    Día ciclo:
-    ${diaCiclo}
-
-    <br><br>
-
-    Último periodo:
-    ${ultimoPeriodo}
-
-</div>
+                    <div class="info">
+                        <strong>Día ciclo:</strong> ${diaCiclo}<br>
+                        <small style="color: #888;">Último periodo: ${ultimoPeriodo}</small>
+                    </div>
                 </div>
                 `;
             });
 
-            contenedor.innerHTML = html;
+            contenedor.innerHTML = html || "<p style='color:#888; text-align:center;'>No hay personas registradas.</p>";
         }
 
         // Ejecutar al cargar la página
