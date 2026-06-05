@@ -549,4 +549,70 @@
                     year: 'numeric'
                 });
                 const proximoPeriodo = calcularProximoPeriodo(ultimoPeriodo, cicloUser);
-                const estado = obtener
+                const estado = obtenerEstado(diaCiclo, cicloUser);
+
+                if(conteos.hasOwnProperty(estado.idClave)){
+                    conteos[estado.idClave]++;
+                }
+
+                const inicioFertil = diaOvulacion - 3;
+
+                if(estado.idClave === "ovulacion"){
+                    htmlAlertas += `<div class="alert-card">🔴 <strong>${persona.nombre}</strong> tiene ovulación estimada hoy (Día ${diaCiclo})</div>`;
+                } else if (diaCiclo === (inicioFertil - 1)) {
+                    htmlAlertas += `<div class="alert-card">🟢 <strong>${persona.nombre}</strong> entra en ventana fértil mañana</div>`;
+                } else if (diaCiclo === (cicloUser - 2)) { 
+                    htmlAlertas += `<div class="alert-card">🟣 <strong>${persona.nombre}</strong> debería iniciar su periodo en 2 días</div>`;
+                } else if (estado.idClave === "atraso") {
+                    htmlAlertas += `<div class="alert-card" style="border-left-color: #555;">⚠ <strong>${persona.nombre}</strong> presenta un retraso (Día ${diaCiclo})</div>`;
+                }
+
+                html += `
+                <div class="person-card">
+                    <div class="person-header">
+                        <div class="person-name">${persona.nombre}</div>
+                        <div class="status ${estado.clase}">
+                            ${estado.nombre}
+                        </div>
+                    </div>
+
+                    <div class="info">
+                        <strong>Día ciclo:</strong> ${diaCiclo}<br>
+                        <strong>Ciclo promedio:</strong> ${cicloUser} días<br>
+                        <strong>Ovulación estimada:</strong> ${fechaOvulacionTexto}<br>
+                        <strong>Próximo periodo:</strong> ${proximoPeriodo}<br>
+                        <small style="color:#888;">
+                            Último periodo: ${ultimoPeriodo}
+                        </small>
+                        <br><br>
+                        <strong>Historial:</strong> ${persona.periodos.length} registros
+                        
+                        <div class="btn-container">
+                            <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">
+                                ➕ Periodo
+                            </button>
+                            <button class="btn-periodo" style="background:#457b9d;" onclick="verHistorial(${persona.id})">
+                                👁 Historial
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            contenedor.innerHTML = html || "<p style='color:#888; text-align:center;'>No hay personas registradas.</p>";
+            contenedorAlertas.innerHTML = htmlAlertas || "<div class='alert-card' style='border-left-color: #2a9d8f;'>✅ No hay alertas ni novedades críticas para hoy.</div>";
+
+            document.getElementById("count-ovulacion").innerText = conteos.ovulacion;
+            document.getElementById("count-fertil").innerText = conteos.fertil;
+            document.getElementById("count-menstruacion").innerText = conteos.menstruacion;
+            document.getElementById("count-lutea").innerText = conteos.lutea;
+            document.getElementById("count-folicular").innerText = conteos.folicular;
+            document.getElementById("count-atraso").innerText = conteos.atraso;
+        }
+
+        // Ejecutar al cargar la página
+        actualizarTodo();
+    </script>
+</body>
+</html>
