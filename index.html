@@ -256,9 +256,9 @@
                 <div>Fase lútea</div>
             </div>
             <div class="stat">
-    <div class="stat-number" id="count-atraso">0</div>
-    <div>Retraso</div>
-</div>
+                <div class="stat-number" id="count-atraso">0</div>
+                <div>Retraso</div>
+            </div>
         </div>
     </div>
 
@@ -374,7 +374,8 @@
 
             if(!persona.periodos.includes(fechaNueva)) {
                 persona.periodos.push(fechaNueva);
-                persona.periodos.sort((a, b) => new Date(a.replace(/-/g, '/')) - new Date(b.replace(/-/g, '/')));
+                // Ordenar fechas cronológicamente de forma segura
+                persona.periodos.sort((a, b) => new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00'));
             }
 
             localStorage.setItem("personas", JSON.stringify(personas));
@@ -385,14 +386,11 @@
         }
         
         function obtenerEstado(dia, cicloPromedio = 28){
-            const faseLuteaPromedio = 14;
-const diaOvulacion = Math.round(cicloPromedio - faseLuteaPromedio);
+            // Se eliminó la doble declaración de diaOvulacion.
+            // Se calcula dinámicamente limitando límites razonables.
+            const diaOvulacion = Math.max(10, Math.min(cicloPromedio - 14, cicloPromedio - 10));
             const inicioFertil = diaOvulacion - 3;
             const finFertil = diaOvulacion + 2;
-const diaOvulacion = Math.max(
-    10,
-    Math.min(cicloPromedio - 14, cicloPromedio - 10)
-);
             
             if(dia <= 5){
                 return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
@@ -421,8 +419,8 @@ const diaOvulacion = Math.max(
         
         function calcularDiaCiclo(fecha){
             const hoy = new Date();
-            const fechaFormateada = fecha.replace(/-/g, '/');
-            const periodo = new Date(fechaFormateada);
+            // Evitamos problemas de desfase horario forzando la interpretación UTC o medianoche local limpia
+            const periodo = new Date(fecha + 'T00:00:00');
 
             hoy.setHours(0,0,0,0);
             periodo.setHours(0,0,0,0);
@@ -440,8 +438,8 @@ const diaOvulacion = Math.max(
             let cantidadCiclos = 0;
 
             for(let i = 1; i < periodos.length; i++){
-                const fechaAnterior = new Date(periodos[i - 1].replace(/-/g, '/'));
-                const fechaActual = new Date(periodos[i].replace(/-/g, '/'));
+                const fechaAnterior = new Date(periodos[i - 1] + 'T00:00:00');
+                const fechaActual = new Date(periodos[i] + 'T00:00:00');
 
                 const diferenciaDias = Math.round((fechaActual - fechaAnterior) / (1000 * 60 * 60 * 24));
 
@@ -468,7 +466,7 @@ const diaOvulacion = Math.max(
             const fechas = [...persona.periodos].reverse();
 
             fechas.forEach(fecha => {
-                const fechaObj = new Date(fecha.replace(/-/g, '/'));
+                const fechaObj = new Date(fecha + 'T00:00:00');
                 const fechaLegible = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
                 
                 html += `
@@ -513,18 +511,17 @@ const diaOvulacion = Math.max(
             actualizarTodo();
         }
 
-       function calcularProximoPeriodo(ultimoPeriodo, cicloPromedio){
-    const [anio, mes, dia] = ultimoPeriodo.split('-').map(Number);
+        function calcularProximoPeriodo(ultimoPeriodo, cicloPromedio){
+            const [anio, mes, dia] = ultimoPeriodo.split('-').map(Number);
+            const fecha = new Date(anio, mes - 1, dia);
+            fecha.setDate(fecha.getDate() + cicloPromedio);
 
-    const fecha = new Date(anio, mes - 1, dia);
-    fecha.setDate(fecha.getDate() + cicloPromedio);
-
-    return fecha.toLocaleDateString('es-ES', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
-}
+            return fecha.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
 
         function actualizarTodo(){
             let contenedor = document.getElementById("listaPersonas");
@@ -539,88 +536,17 @@ const diaOvulacion = Math.max(
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 const cicloUser = calcularCicloPromedio(persona.periodos);
+                
+                // Corrección aquí: eliminamos la doble declaración eliminando un 'const' repetido
                 const diaOvulacion = cicloUser - 14;
 
-const fechaOvulacion = new Date(
-    ultimoPeriodo.replace(/-/g, '/')
-);
+                const fechaOvulacion = new Date(ultimoPeriodo + 'T00:00:00');
+                fechaOvulacion.setDate(fechaOvulacion.getDate() + diaOvulacion - 1);
 
-fechaOvulacion.setDate(
-    fechaOvulacion.getDate() + diaOvulacion - 1
-);
-
-const fechaOvulacionTexto = fechaOvulacion.toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-});
+                const fechaOvulacionTexto = fechaOvulacion.toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
                 const proximoPeriodo = calcularProximoPeriodo(ultimoPeriodo, cicloUser);
-                const estado = obtenerEstado(diaCiclo, cicloUser);
-
-                if(conteos.hasOwnProperty(estado.idClave)){
-                    conteos[estado.idClave]++;
-                }
-
-                // Variables para cálculo de alertas basadas en el ciclo de esta persona
-                const diaOvulacion = cicloUser - 14;
-                const inicioFertil = diaOvulacion - 3;
-
-                if(estado.idClave === "ovulacion"){
-                    htmlAlertas += `<div class="alert-card">🔴 <strong>${persona.nombre}</strong> tiene ovulación estimada hoy (Día ${diaCiclo})</div>`;
-                } else if (diaCiclo === (inicioFertil - 1)) {
-                    htmlAlertas += `<div class="alert-card">🟢 <strong>${persona.nombre}</strong> entra en ventana fértil mañana</div>`;
-                } else if (diaCiclo === (cicloUser - 2)) { 
-                    htmlAlertas += `<div class="alert-card">🟣 <strong>${persona.nombre}</strong> debería iniciar su periodo en 2 días</div>`;
-                } else if (estado.idClave === "atraso") {
-                    htmlAlertas += `<div class="alert-card" style="border-left-color: #555;">⚠ <strong>${persona.nombre}</strong> presenta un retraso (Día ${diaCiclo})</div>`;
-                }
-
-                html += `
-                <div class="person-card">
-                    <div class="person-header">
-                        <div class="person-name">${persona.nombre}</div>
-                        <div class="status ${estado.clase}">
-                            ${estado.nombre}
-                        </div>
-                    </div>
-
-                    <div class="info">
-<strong>Día ciclo:</strong> ${diaCiclo}<br>
-<strong>Ciclo promedio:</strong> ${cicloUser} días<br>
-<strong>Ovulación estimada:</strong> ${fechaOvulacionTexto}<br>
-<strong>Próximo periodo:</strong> ${proximoPeriodo}<br>
-                        <small style="color:#888;">
-                            Último periodo: ${ultimoPeriodo}
-                        </small>
-                        <br><br>
-                        <strong>Historial:</strong> ${persona.periodos.length} registros
-                        
-                        <div class="btn-container">
-                            <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">
-                                ➕ Periodo
-                            </button>
-                            <button class="btn-periodo" style="background:#457b9d;" onclick="verHistorial(${persona.id})">
-                                👁 Historial
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            });
-
-            contenedor.innerHTML = html || "<p style='color:#888; text-align:center;'>No hay personas registradas.</p>";
-            contenedorAlertas.innerHTML = htmlAlertas || "<div class='alert-card' style='border-left-color: #2a9d8f;'>✅ No hay alertas ni novedades críticas para hoy.</div>";
-
-            document.getElementById("count-ovulacion").innerText = conteos.ovulacion;
-            document.getElementById("count-fertil").innerText = conteos.fertil;
-            document.getElementById("count-menstruacion").innerText = conteos.menstruacion;
-            document.getElementById("count-lutea").innerText = conteos.lutea;
-            document.getElementById("count-folicular").innerText = conteos.folicular;
-            document.getElementById("count-atraso").innerText = conteos.atraso;
-        }
-
-        // Ejecutar al cargar la página
-        actualizarTodo();
-    </script>
-</body>
-</html>
+                const estado = obtener
