@@ -168,7 +168,7 @@
             border-radius:20px;
             display:flex;
             flex-direction:column;
-            gap:10px;
+            gap:12px;
         }
 
         .modal-content input{
@@ -182,6 +182,7 @@
             border:none;
             border-radius:10px;
             cursor:pointer;
+            font-weight: bold;
         }
 
         .modal-content button:first-of-type{
@@ -189,15 +190,30 @@
             color:white;
         }
 
+        /* Contenedor específico para evitar desbordes en el historial */
+        #contenidoHistorial {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
         .btn-periodo{
+            flex: 1;
             background:#7b2cbf;
             color:white;
             border:none;
-            padding:10px 14px;
+            padding:10px 8px;
             border-radius:10px;
             cursor:pointer;
-            font-size:14px;
-            margin-top: 10px;
+            font-size:13px;
+            font-weight: bold;
+            text-align: center;
         }
 
         .btn-periodo:hover{
@@ -255,6 +271,14 @@
         </div>
     </div>
 
+    <div id="modalHistorial" class="modal">
+        <div class="modal-content">
+            <h2 id="tituloHistorial">Historial</h2>
+            <div id="contenidoHistorial"></div>
+            <button onclick="cerrarHistorial()" style="background:#555; color:white;">Cerrar</button>
+        </div>
+    </div>
+
     <div class="bottom-nav">
         <div class="nav-item">🏠<br>Inicio</div>
         <div class="nav-item">👥<br>Personas</div>
@@ -279,7 +303,7 @@
         let personas = JSON.parse(localStorage.getItem("personas")) || [];
         let personaSeleccionada = null;
 
-        // Poner la fecha de hoy automáticamente en el header superior
+        // Fecha de hoy en el header superior
         const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
         document.getElementById("fechaActualHeader").innerText = new Date().toLocaleDateString('es-ES', opcionesFecha);
 
@@ -311,7 +335,6 @@
             localStorage.setItem("personas", JSON.stringify(personas));
 
             cerrarModal();
-
             document.getElementById("nombrePersona").value = "";
             document.getElementById("fechaPeriodo").value = "";
 
@@ -320,14 +343,11 @@
 
         function registrarPeriodo(id){
             personaSeleccionada = id;
-            
-            // Pre-cargar la fecha de hoy en el input del modal
             const hoy = new Date();
             const hoyFormateado = hoy.getFullYear() + '-' + 
                                   String(hoy.getMonth() + 1).padStart(2, '0') + '-' + 
                                   String(hoy.getDate()).padStart(2, '0');
             document.getElementById("fechaNuevoPeriodo").value = hoyFormateado;
-
             document.getElementById("modalPeriodo").style.display = "flex";
         }
 
@@ -344,19 +364,15 @@
             }
 
             const persona = personas.find(p => p.id === personaSeleccionada);
+            if(!persona) return;
 
-            if(!persona){
-                return;
-            }
-
-            // Evitar duplicar la misma fecha en el historial
             if(!persona.periodos.includes(fechaNueva)) {
                 persona.periodos.push(fechaNueva);
-                persona.periodos.sort();
+                // Ordenar correctamente las fechas de menor a mayor evitando problemas UTC
+                persona.periodos.sort((a, b) => new Date(a.replace(/-/g, '/')) - new Date(b.replace(/-/g, '/')));
             }
 
             localStorage.setItem("personas", JSON.stringify(personas));
-
             cerrarModalPeriodo();
             document.getElementById("fechaNuevoPeriodo").value = "";
 
@@ -364,25 +380,17 @@
         }
         
         function obtenerEstado(dia){
-            if(dia <= 5){
-                return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
-            }
-            if(dia <= 10){
-                return { nombre: "Folicular", clase: "folicular", idClave: "folicular" };
-            }
-            if(dia <= 13){
-                return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
-            }
-            if(dia === 14){
-                return { nombre: "Ovulación", clase: "ovulacion", idClave: "ovulacion" };
-            }
-            if(dia <= 16){
-                return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
-            }
-            if(dia <= 28){
-                return { nombre: "Fase Lútea", clase: "lutea", idClave: "lutea" };
-            }
+            if(dia <= 5) return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
+            if(dia <= 10) return { nombre: "Folicular", clase: "folicular", idClave: "folicular" };
+            if(dia <= 13) return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
+            if(dia === 14) return { nombre: "Ovulación", clase: "ovulacion", idClave: "ovulacion" };
+            if(dia <= 16) return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
+            if(dia <= 28) return { nombre: "Fase Lútea", clase: "lutea", idClave: "lutea" };
             return { nombre: "Posible Retraso", clase: "atraso", idClave: "atraso" };
+        }
+
+        function cerrarHistorial(){
+            document.getElementById("modalHistorial").style.display = "none";
         }
         
         function calcularDiaCiclo(fecha){
@@ -394,9 +402,34 @@
             periodo.setHours(0,0,0,0);
 
             const diferencia = Math.floor((hoy - periodo) / (1000 * 60 * 60 * 24));
-            
-            // Retorna los días reales transcurridos
             return diferencia + 1;
+        }
+
+        function verHistorial(id){
+            const persona = personas.find(p => p.id === id);
+            if(!persona) return;
+
+            document.getElementById("tituloHistorial").innerText = "Historial de " + persona.nombre;
+
+            let html = "";
+            // Clonar e invertir para ver primero los periodos más recientes
+            const fechas = [...persona.periodos].reverse();
+
+            fechas.forEach(fecha => {
+                // Formatear visualmente la fecha a algo más amigable (ej: 4 de jun de 2026)
+                const fechaObj = new Date(fecha.replace(/-/g, '/'));
+                const fechaLegible = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                html += `
+                <div style="padding:10px; margin-bottom:8px; background:#f4f6f9; border-radius:10px; display:flex; justify-content:space-between;">
+                    <span>📅 ${fechaLegible}</span>
+                    <span style="font-size:12px; color:#888;">(${fecha})</span>
+                </div>
+                `;
+            });
+
+            document.getElementById("contenidoHistorial").innerHTML = html;
+            document.getElementById("modalHistorial").style.display = "flex";
         }
         
         function actualizarTodo(){
@@ -406,8 +439,6 @@
             
             let html = "";
             let htmlAlertas = "";
-
-            // Contadores para el área de estadísticas
             let conteos = { ovulacion: 0, fertil: 0, menstruacion: 0, lutea: 0 };
 
             personas.forEach(persona => {
@@ -415,12 +446,10 @@
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 const estado = obtenerEstado(diaCiclo);
 
-                // Incrementar contadores globales si corresponde al tipo
                 if(conteos.hasOwnProperty(estado.idClave)){
                     conteos[estado.idClave]++;
                 }
 
-                // Generar alertas dinámicas de atención para hoy
                 if(estado.idClave === "ovulacion"){
                     htmlAlertas += `<div class="alert-card">🔴 <strong>${persona.nombre}</strong> tiene ovulación estimada hoy (Día ${diaCiclo})</div>`;
                 } else if (diaCiclo === 11) {
@@ -447,29 +476,29 @@
                         </small>
                         <br><br>
                         <strong>Historial:</strong> ${persona.periodos.length} registros
-                        <br>
-                        <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">
-                            ➕ Registrar periodo
-                        </button>
+                        
+                        <div class="btn-container">
+                            <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">
+                                ➕ Periodo
+                            </button>
+                            <button class="btn-periodo" style="background:#457b9d;" onclick="verHistorial(${persona.id})">
+                                👁 Historial
+                            </button>
+                        </div>
                     </div>
                 </div>
                 `;
             });
 
-            // Pintar tarjetas de personas
             contenedor.innerHTML = html || "<p style='color:#888; text-align:center;'>No hay personas registradas.</p>";
-            
-            // Pintar alertas automáticas
             contenedorAlertas.innerHTML = htmlAlertas || "<div class='alert-card' style='border-left-color: #2a9d8f;'>✅ No hay alertas ni novedades críticas para hoy.</div>";
 
-            // Actualizar bloques del resumen numérico superior
             document.getElementById("count-ovulacion").innerText = conteos.ovulacion;
             document.getElementById("count-fertil").innerText = conteos.fertil;
             document.getElementById("count-menstruacion").innerText = conteos.menstruacion;
             document.getElementById("count-lutea").innerText = conteos.lutea;
         }
 
-        // Ejecutar carga inicial
         actualizarTodo();
     </script>
 </body>
