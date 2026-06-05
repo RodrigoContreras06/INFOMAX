@@ -381,12 +381,28 @@
         }
         
         function obtenerEstado(dia, cicloPromedio = 28){
-            if(dia <= 5) return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
-            if(dia <= 10) return { nombre: "Folicular", clase: "folicular", idClave: "folicular" };
-            if(dia <= 13) return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
-            if(dia === 14) return { nombre: "Ovulación", clase: "ovulacion", idClave: "ovulacion" };
-            if(dia <= 16) return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
-            if(dia <= cicloPromedio) return { nombre: "Fase Lútea", clase: "lutea", idClave: "lutea" };
+            const diaOvulacion = cicloPromedio - 14;
+            const inicioFertil = diaOvulacion - 3;
+            const finFertil = diaOvulacion + 2;
+
+            if(dia <= 5){
+                return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
+            }
+            if(dia < inicioFertil){
+                return { nombre: "Folicular", clase: "folicular", idClave: "folicular" };
+            }
+            if(dia >= inicioFertil && dia < diaOvulacion){
+                return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
+            }
+            if(dia === diaOvulacion){
+                return { nombre: "Ovulación", clase: "ovulacion", idClave: "ovulacion" };
+            }
+            if(dia <= finFertil){
+                return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
+            }
+            if(dia <= cicloPromedio){
+                return { nombre: "Fase Lútea", clase: "lutea", idClave: "lutea" };
+            }
             return { nombre: "Posible Retraso", clase: "atraso", idClave: "atraso" };
         }
 
@@ -445,7 +461,7 @@
             fechas.forEach(fecha => {
                 const fechaObj = new Date(fecha.replace(/-/g, '/'));
                 const fechaLegible = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-
+                
                 html += `
                 <div style="padding:10px; margin-bottom:8px; background:#f4f6f9; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
@@ -467,20 +483,17 @@
             const persona = personas.find(p => p.id === idPersona);
             if(!persona) return;
 
-            // 1. Validar que no sea el único registro
             if(persona.periodos.length === 1){
                 alert("No puedes eliminar el único periodo registrado.");
                 return;
             }
 
-            // 2. Validar que no sea el periodo más reciente (último del array original)
             const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
             if(fecha === ultimoPeriodo){
                 alert("No puedes eliminar el periodo más reciente porque afectaría los cálculos actuales.");
                 return;
             }
 
-            // 3. Confirmar y eliminar si pasa los filtros
             const confirmar = confirm("¿Eliminar este registro?");
             if(!confirmar) return;
 
@@ -490,7 +503,13 @@
             verHistorial(idPersona);
             actualizarTodo();
         }
-        
+
+        function calcularProximoPeriodo(ultimoPeriodo, cicloPromedio){
+            const fecha = new Date(ultimoPeriodo.replace(/-/g, '/'));
+            fecha.setDate(fecha.getDate() + cicloPromedio);
+            return fecha.toLocaleDateString('es-ES');
+        }
+
         function actualizarTodo(){
             let contenedor = document.getElementById("listaPersonas");
             let contenedorAlertas = document.getElementById("contenedorAlertas");
@@ -498,22 +517,26 @@
             
             let html = "";
             let htmlAlertas = "";
-            let conteos = { ovulacion: 0, fertil: 0, menstruacion: 0, lutea: 0, folicular: 0 };
+            let conteos = { ovulacion: 0, fertil: 0, menstruacion: 0, lutea: 0, folicular: 0, atraso: 0 };
 
             personas.forEach(persona => {
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
-                
                 const cicloUser = calcularCicloPromedio(persona.periodos);
+                const proximoPeriodo = calcularProximoPeriodo(ultimoPeriodo, cicloUser);
                 const estado = obtenerEstado(diaCiclo, cicloUser);
 
                 if(conteos.hasOwnProperty(estado.idClave)){
                     conteos[estado.idClave]++;
                 }
 
+                // Variables para cálculo de alertas basadas en el ciclo de esta persona
+                const diaOvulacion = cicloUser - 14;
+                const inicioFertil = diaOvulacion - 3;
+
                 if(estado.idClave === "ovulacion"){
                     htmlAlertas += `<div class="alert-card">🔴 <strong>${persona.nombre}</strong> tiene ovulación estimada hoy (Día ${diaCiclo})</div>`;
-                } else if (diaCiclo === 11) {
+                } else if (diaCiclo === (inicioFertil - 1)) {
                     htmlAlertas += `<div class="alert-card">🟢 <strong>${persona.nombre}</strong> entra en ventana fértil mañana</div>`;
                 } else if (diaCiclo === (cicloUser - 2)) { 
                     htmlAlertas += `<div class="alert-card">🟣 <strong>${persona.nombre}</strong> debería iniciar su periodo en 2 días</div>`;
@@ -533,6 +556,7 @@
                     <div class="info">
                         <strong>Día ciclo:</strong> ${diaCiclo}<br>
                         <strong>Ciclo promedio:</strong> ${cicloUser} días<br>
+                        <strong>Próximo periodo:</strong> ${proximoPeriodo}<br>
                         <small style="color:#888;">
                             Último periodo: ${ultimoPeriodo}
                         </small>
@@ -562,6 +586,7 @@
             document.getElementById("count-folicular").innerText = conteos.folicular;
         }
 
+        // Ejecutar al cargar la página
         actualizarTodo();
     </script>
 </body>
