@@ -248,6 +248,10 @@
                 <div>Menstruación</div>
             </div>
             <div class="stat">
+                <div class="stat-number" id="count-folicular">0</div>
+                <div>Folicular</div>
+            </div>
+            <div class="stat">
                 <div class="stat-number" id="count-lutea">0</div>
                 <div>Fase lútea</div>
             </div>
@@ -326,7 +330,6 @@
             const nuevaPersona = {
                 id: Date.now(),
                 nombre: nombre,
-                cicloPromedio: 28, // Ciclo base predeterminado
                 periodos: [fecha]
             };
 
@@ -377,7 +380,6 @@
             actualizarTodo();
         }
         
-        // Ahora recibe el ciclo específico de la persona (por defecto 28 si no existe)
         function obtenerEstado(dia, cicloPromedio = 28){
             if(dia <= 5) return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
             if(dia <= 10) return { nombre: "Folicular", clase: "folicular", idClave: "folicular" };
@@ -402,6 +404,33 @@
 
             const diferencia = Math.floor((hoy - periodo) / (1000 * 60 * 60 * 24));
             return diferencia + 1;
+        }
+
+        function calcularCicloPromedio(periodos){
+            if(periodos.length < 2){
+                return 28; 
+            }
+
+            let sumaDias = 0;
+            let cantidadCiclos = 0;
+
+            for(let i = 1; i < periodos.length; i++){
+                const fechaAnterior = new Date(periodos[i - 1].replace(/-/g, '/'));
+                const fechaActual = new Date(periodos[i].replace(/-/g, '/'));
+
+                const diferenciaDias = Math.round((fechaActual - fechaAnterior) / (1000 * 60 * 60 * 24));
+
+                if(diferenciaDias >= 15 && diferenciaDias <= 60){
+                    sumaDias += diferenciaDias;
+                    cantidadCiclos++;
+                }
+            }
+
+            if(cantidadCiclos === 0){
+                return 28;
+            }
+
+            return Math.round(sumaDias / cantidadCiclos);
         }
 
         function verHistorial(id){
@@ -438,11 +467,20 @@
             const persona = personas.find(p => p.id === idPersona);
             if(!persona) return;
 
+            // 1. Validar que no sea el único registro
             if(persona.periodos.length === 1){
                 alert("No puedes eliminar el único periodo registrado.");
                 return;
             }
 
+            // 2. Validar que no sea el periodo más reciente (último del array original)
+            const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
+            if(fecha === ultimoPeriodo){
+                alert("No puedes eliminar el periodo más reciente porque afectaría los cálculos actuales.");
+                return;
+            }
+
+            // 3. Confirmar y eliminar si pasa los filtros
             const confirmar = confirm("¿Eliminar este registro?");
             if(!confirmar) return;
 
@@ -460,14 +498,13 @@
             
             let html = "";
             let htmlAlertas = "";
-            let conteos = { ovulacion: 0, fertil: 0, menstruacion: 0, lutea: 0 };
+            let conteos = { ovulacion: 0, fertil: 0, menstruacion: 0, lutea: 0, folicular: 0 };
 
             personas.forEach(persona => {
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 
-                // Pasamos el ciclo promedio personalizado (o 28 si por alguna razón no existe)
-                const cicloUser = persona.cicloPromedio || 28;
+                const cicloUser = calcularCicloPromedio(persona.periodos);
                 const estado = obtenerEstado(diaCiclo, cicloUser);
 
                 if(conteos.hasOwnProperty(estado.idClave)){
@@ -479,7 +516,6 @@
                 } else if (diaCiclo === 11) {
                     htmlAlertas += `<div class="alert-card">🟢 <strong>${persona.nombre}</strong> entra en ventana fértil mañana</div>`;
                 } else if (diaCiclo === (cicloUser - 2)) { 
-                    // Alerta dinámica basada en su ciclo (ej: día 26 en ciclos de 28)
                     htmlAlertas += `<div class="alert-card">🟣 <strong>${persona.nombre}</strong> debería iniciar su periodo en 2 días</div>`;
                 } else if (estado.idClave === "atraso") {
                     htmlAlertas += `<div class="alert-card" style="border-left-color: #555;">⚠ <strong>${persona.nombre}</strong> presenta un retraso (Día ${diaCiclo})</div>`;
@@ -496,7 +532,8 @@
 
                     <div class="info">
                         <strong>Día ciclo:</strong> ${diaCiclo}<br>
-                        <small style="color: #888;">
+                        <strong>Ciclo promedio:</strong> ${cicloUser} días<br>
+                        <small style="color:#888;">
                             Último periodo: ${ultimoPeriodo}
                         </small>
                         <br><br>
@@ -522,6 +559,7 @@
             document.getElementById("count-fertil").innerText = conteos.fertil;
             document.getElementById("count-menstruacion").innerText = conteos.menstruacion;
             document.getElementById("count-lutea").innerText = conteos.lutea;
+            document.getElementById("count-folicular").innerText = conteos.folicular;
         }
 
         actualizarTodo();
