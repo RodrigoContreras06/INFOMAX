@@ -190,7 +190,6 @@
             color:white;
         }
 
-        /* Contenedor específico para evitar desbordes en el historial */
         #contenidoHistorial {
             max-height: 250px;
             overflow-y: auto;
@@ -327,8 +326,8 @@
             const nuevaPersona = {
                 id: Date.now(),
                 nombre: nombre,
-                periodos: [fecha],
-                notes: ""
+                cicloPromedio: 28, // Ciclo base predeterminado
+                periodos: [fecha]
             };
 
             personas.push(nuevaPersona);
@@ -368,7 +367,6 @@
 
             if(!persona.periodos.includes(fechaNueva)) {
                 persona.periodos.push(fechaNueva);
-                // Ordenar correctamente las fechas de menor a mayor evitando problemas UTC
                 persona.periodos.sort((a, b) => new Date(a.replace(/-/g, '/')) - new Date(b.replace(/-/g, '/')));
             }
 
@@ -379,13 +377,14 @@
             actualizarTodo();
         }
         
-        function obtenerEstado(dia){
+        // Ahora recibe el ciclo específico de la persona (por defecto 28 si no existe)
+        function obtenerEstado(dia, cicloPromedio = 28){
             if(dia <= 5) return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
             if(dia <= 10) return { nombre: "Folicular", clase: "folicular", idClave: "folicular" };
             if(dia <= 13) return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
             if(dia === 14) return { nombre: "Ovulación", clase: "ovulacion", idClave: "ovulacion" };
             if(dia <= 16) return { nombre: "Ventana fértil", clase: "fertil", idClave: "fertil" };
-            if(dia <= 28) return { nombre: "Fase Lútea", clase: "lutea", idClave: "lutea" };
+            if(dia <= cicloPromedio) return { nombre: "Fase Lútea", clase: "lutea", idClave: "lutea" };
             return { nombre: "Posible Retraso", clase: "atraso", idClave: "atraso" };
         }
 
@@ -412,24 +411,46 @@
             document.getElementById("tituloHistorial").innerText = "Historial de " + persona.nombre;
 
             let html = "";
-            // Clonar e invertir para ver primero los periodos más recientes
             const fechas = [...persona.periodos].reverse();
 
             fechas.forEach(fecha => {
-                // Formatear visualmente la fecha a algo más amigable (ej: 4 de jun de 2026)
                 const fechaObj = new Date(fecha.replace(/-/g, '/'));
                 const fechaLegible = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 
                 html += `
-                <div style="padding:10px; margin-bottom:8px; background:#f4f6f9; border-radius:10px; display:flex; justify-content:space-between;">
-                    <span>📅 ${fechaLegible}</span>
-                    <span style="font-size:12px; color:#888;">(${fecha})</span>
+                <div style="padding:10px; margin-bottom:8px; background:#f4f6f9; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div>📅 ${fechaLegible}</div>
+                        <small style="color:#888;">${fecha}</small>
+                    </div>
+                    <button onclick="eliminarPeriodo(${persona.id}, '${fecha}')" style="background:#e63946; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;">
+                        🗑
+                    </button>
                 </div>
                 `;
             });
 
             document.getElementById("contenidoHistorial").innerHTML = html;
             document.getElementById("modalHistorial").style.display = "flex";
+        }
+
+        function eliminarPeriodo(idPersona, fecha){
+            const persona = personas.find(p => p.id === idPersona);
+            if(!persona) return;
+
+            if(persona.periodos.length === 1){
+                alert("No puedes eliminar el único periodo registrado.");
+                return;
+            }
+
+            const confirmar = confirm("¿Eliminar este registro?");
+            if(!confirmar) return;
+
+            persona.periodos = persona.periodos.filter(p => p !== fecha);
+            localStorage.setItem("personas", JSON.stringify(personas));
+
+            verHistorial(idPersona);
+            actualizarTodo();
         }
         
         function actualizarTodo(){
@@ -444,7 +465,10 @@
             personas.forEach(persona => {
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
-                const estado = obtenerEstado(diaCiclo);
+                
+                // Pasamos el ciclo promedio personalizado (o 28 si por alguna razón no existe)
+                const cicloUser = persona.cicloPromedio || 28;
+                const estado = obtenerEstado(diaCiclo, cicloUser);
 
                 if(conteos.hasOwnProperty(estado.idClave)){
                     conteos[estado.idClave]++;
@@ -454,8 +478,9 @@
                     htmlAlertas += `<div class="alert-card">🔴 <strong>${persona.nombre}</strong> tiene ovulación estimada hoy (Día ${diaCiclo})</div>`;
                 } else if (diaCiclo === 11) {
                     htmlAlertas += `<div class="alert-card">🟢 <strong>${persona.nombre}</strong> entra en ventana fértil mañana</div>`;
-                } else if (diaCiclo === 26) {
-                    htmlAlertas += `<div class="alert-card">🟣 <strong>${persona.nombre}</strong> debería iniciar su periodo en 3 días</div>`;
+                } else if (diaCiclo === (cicloUser - 2)) { 
+                    // Alerta dinámica basada en su ciclo (ej: día 26 en ciclos de 28)
+                    htmlAlertas += `<div class="alert-card">🟣 <strong>${persona.nombre}</strong> debería iniciar su periodo en 2 días</div>`;
                 } else if (estado.idClave === "atraso") {
                     htmlAlertas += `<div class="alert-card" style="border-left-color: #555;">⚠ <strong>${persona.nombre}</strong> presenta un retraso (Día ${diaCiclo})</div>`;
                 }
