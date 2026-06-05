@@ -255,6 +255,10 @@
                 <div class="stat-number" id="count-lutea">0</div>
                 <div>Fase lútea</div>
             </div>
+            <div class="stat">
+    <div class="stat-number" id="count-atraso">0</div>
+    <div>Retraso</div>
+</div>
         </div>
     </div>
 
@@ -381,10 +385,15 @@
         }
         
         function obtenerEstado(dia, cicloPromedio = 28){
-            const diaOvulacion = cicloPromedio - 14;
+            const faseLuteaPromedio = 14;
+const diaOvulacion = Math.round(cicloPromedio - faseLuteaPromedio);
             const inicioFertil = diaOvulacion - 3;
             const finFertil = diaOvulacion + 2;
-
+const diaOvulacion = Math.max(
+    10,
+    Math.min(cicloPromedio - 14, cicloPromedio - 10)
+);
+            
             if(dia <= 5){
                 return { nombre: "Menstruación", clase: "menstruacion", idClave: "menstruacion" };
             }
@@ -504,11 +513,18 @@
             actualizarTodo();
         }
 
-        function calcularProximoPeriodo(ultimoPeriodo, cicloPromedio){
-            const fecha = new Date(ultimoPeriodo.replace(/-/g, '/'));
-            fecha.setDate(fecha.getDate() + cicloPromedio);
-            return fecha.toLocaleDateString('es-ES');
-        }
+       function calcularProximoPeriodo(ultimoPeriodo, cicloPromedio){
+    const [anio, mes, dia] = ultimoPeriodo.split('-').map(Number);
+
+    const fecha = new Date(anio, mes - 1, dia);
+    fecha.setDate(fecha.getDate() + cicloPromedio);
+
+    return fecha.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+}
 
         function actualizarTodo(){
             let contenedor = document.getElementById("listaPersonas");
@@ -523,6 +539,21 @@
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 const cicloUser = calcularCicloPromedio(persona.periodos);
+                const diaOvulacion = cicloUser - 14;
+
+const fechaOvulacion = new Date(
+    ultimoPeriodo.replace(/-/g, '/')
+);
+
+fechaOvulacion.setDate(
+    fechaOvulacion.getDate() + diaOvulacion - 1
+);
+
+const fechaOvulacionTexto = fechaOvulacion.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+});
                 const proximoPeriodo = calcularProximoPeriodo(ultimoPeriodo, cicloUser);
                 const estado = obtenerEstado(diaCiclo, cicloUser);
 
@@ -554,9 +585,10 @@
                     </div>
 
                     <div class="info">
-                        <strong>Día ciclo:</strong> ${diaCiclo}<br>
-                        <strong>Ciclo promedio:</strong> ${cicloUser} días<br>
-                        <strong>Próximo periodo:</strong> ${proximoPeriodo}<br>
+<strong>Día ciclo:</strong> ${diaCiclo}<br>
+<strong>Ciclo promedio:</strong> ${cicloUser} días<br>
+<strong>Ovulación estimada:</strong> ${fechaOvulacionTexto}<br>
+<strong>Próximo periodo:</strong> ${proximoPeriodo}<br>
                         <small style="color:#888;">
                             Último periodo: ${ultimoPeriodo}
                         </small>
@@ -584,6 +616,7 @@
             document.getElementById("count-menstruacion").innerText = conteos.menstruacion;
             document.getElementById("count-lutea").innerText = conteos.lutea;
             document.getElementById("count-folicular").innerText = conteos.folicular;
+            document.getElementById("count-atraso").innerText = conteos.atraso;
         }
 
         // Ejecutar al cargar la página
