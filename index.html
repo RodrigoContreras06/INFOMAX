@@ -269,6 +269,20 @@
 
     <button class="fab" onclick="abrirModal()">+</button>
 
+    <div id="modalPersona" class="modal">
+        <div class="modal-content">
+            <h2>Nueva Persona</h2>
+            <label for="nombrePersona">Nombre</label>
+            <input type="text" id="nombrePersona">
+
+            <label for="fechaPeriodo">Primer periodo registrado</label>
+            <input type="date" id="fechaPeriodo">
+
+            <button onclick="guardarPersona()">Guardar</button>
+            <button onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+
     <div id="modalPeriodo" class="modal">
         <div class="modal-content">
             <h2>Registrar Periodo</h2>
@@ -286,31 +300,26 @@
         </div>
     </div>
 
+    <div id="modalEditarPeriodo" class="modal">
+        <div class="modal-content">
+            <h2>Editar Periodo</h2>
+            <input type="date" id="fechaEditarPeriodo">
+            <button onclick="guardarEdicionPeriodo()">Guardar cambios</button>
+            <button onclick="cerrarModalEditar()" style="background:#555; color:white;">Cancelar</button>
+        </div>
+    </div>
+
     <div class="bottom-nav">
         <div class="nav-item">🏠<br>Inicio</div>
         <div class="nav-item">👥<br>Personas</div>
         <div class="nav-item">⚙️<br>Ajustes</div>
     </div>
 
-    <div id="modalPersona" class="modal">
-        <div class="modal-content">
-            <h2>Nueva Persona</h2>
-            <label for="nombrePersona">Nombre</label>
-            <input type="text" id="nombrePersona">
-
-            <label for="fechaPeriodo">Primer periodo registrado</label>
-            <input type="date" id="fechaPeriodo">
-
-            <button onclick="guardarPersona()">Guardar</button>
-            <button onclick="cerrarModal()">Cancelar</button>
-        </div>
-    </div>
-
     <script>
         let personas = JSON.parse(localStorage.getItem("personas")) || [];
         let personaSeleccionada = null;
+        let fechaOriginalEditar = null;
 
-        // Fecha de hoy en el header superior
         const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
         document.getElementById("fechaActualHeader").innerText = new Date().toLocaleDateString('es-ES', opcionesFecha);
 
@@ -466,16 +475,20 @@
                 const fechaLegible = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
                 
                 html += `
-                <div style="padding:10px; margin-bottom:8px; background:#f4f6f9; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="padding:12px; margin-bottom:8px; background:#f4f6f9; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div>📅 ${fechaLegible}</div>
                         <small style="color:#888;">${fecha}</small>
                     </div>
-                    <button onclick="eliminarPeriodo(${persona.id}, '${fecha}')" style="background:#e63946; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;">
-                        🗑
-                    </button>
-                </div>
-                `;
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="editarPeriodo(${persona.id}, '${fecha}')" style="background:#457b9d; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">
+                            ✏️
+                        </button>
+                        <button onclick="eliminarPeriodo(${persona.id}, '${fecha}')" style="background:#e63946; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">
+                            🗑
+                        </button>
+                    </div>
+                </div>`;
             });
 
             document.getElementById("contenidoHistorial").innerHTML = html;
@@ -537,6 +550,42 @@
             actualizarTodo();
         }
 
+        function editarPeriodo(idPersona, fecha){
+            personaSeleccionada = idPersona;
+            fechaOriginalEditar = fecha;
+
+            document.getElementById("fechaEditarPeriodo").value = fecha;
+            document.getElementById("modalEditarPeriodo").style.display = "flex";
+        }
+
+        function cerrarModalEditar(){
+            document.getElementById("modalEditarPeriodo").style.display = "none";
+        }
+
+        function guardarEdicionPeriodo(){
+            const nuevaFecha = document.getElementById("fechaEditarPeriodo").value;
+
+            if(!nuevaFecha){
+                alert("Seleccione una fecha");
+                return;
+            }
+
+            const persona = personas.find(p => p.id === personaSeleccionada);
+            if(!persona) return;
+
+            const indice = persona.periodos.indexOf(fechaOriginalEditar);
+            if(indice === -1) return;
+
+            persona.periodos[indice] = nuevaFecha;
+            persona.periodos.sort((a,b) => new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00'));
+
+            localStorage.setItem("personas", JSON.stringify(personas));
+
+            cerrarModalEditar();
+            verHistorial(persona.id);
+            actualizarTodo();
+        }
+
         function actualizarTodo(){
             let contenedor = document.getElementById("listaPersonas");
             let contenedorAlertas = document.getElementById("contenedorAlertas");
@@ -555,6 +604,8 @@
 
                 const fechaOvulacion = new Date(ultimoPeriodo + 'T00:00:00');
                 fechaOvulacion.setDate(fechaOvulacion.getDate() + diaOvulacion - 1);
+
+                const porcentajeCiclo = Math.max(0, Math.min(Math.round((diaCiclo / cicloUser) * 100), 100));
 
                 const fechaOvulacionTexto = fechaOvulacion.toLocaleDateString('es-ES', {
                     day: 'numeric',
@@ -591,31 +642,28 @@
 
                     <div class="info">
                         <strong>Día ciclo:</strong> ${diaCiclo}<br>
+                        <strong>Progreso:</strong> Día ${diaCiclo} de ${cicloUser}
+
+                        <div style="width:100%; height:12px; background:#ddd; border-radius:20px; overflow:hidden; margin-top:6px; margin-bottom:10px;">
+                            <div style="width:${porcentajeCiclo}%; height:100%; background:#7b2cbf; transition:.3s;"></div>
+                        </div>
+
+                        <small style="color:#666;">${porcentajeCiclo}% completado</small>
+                        <br><br>
                         <strong>Ciclo promedio:</strong> ${cicloUser} días<br>
                         <strong>Ovulación estimada:</strong> ${fechaOvulacionTexto}<br>
                         <strong>Próximo periodo:</strong> ${proximoPeriodo}<br>
-                        <small style="color:#888;">
-                            Último periodo: ${ultimoPeriodo}
-                        </small>
+                        <small style="color:#888;">Último periodo: ${ultimoPeriodo}</small>
                         <br><br>
                         <strong>Historial:</strong> ${persona.periodos.length} registros
                         
                         <div class="btn-container">
-                            <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">
-                                ➕ Periodo
-                            </button>
-
-                            <button class="btn-periodo" style="background:#457b9d;" onclick="verHistorial(${persona.id})">
-                                👁 Historial
-                            </button>
-
-                            <button class="btn-periodo" style="background:#e63946;" onclick="eliminarPersona(${persona.id})">
-                                🗑 Eliminar
-                            </button>
+                            <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">➕ Periodo</button>
+                            <button class="btn-periodo" style="background:#457b9d;" onclick="verHistorial(${persona.id})">👁 Historial</button>
+                            <button class="btn-periodo" style="background:#e63946;" onclick="eliminarPersona(${persona.id})">🗑 Eliminar</button>
                         </div>
                     </div>
-                </div>
-                `;
+                </div>`;
             });
 
             contenedor.innerHTML = html || "<p style='color:#888; text-align:center;'>No hay personas registradas.</p>";
@@ -629,7 +677,6 @@
             document.getElementById("count-atraso").innerText = conteos.atraso;
         }
 
-        // Ejecutar al cargar la página de forma segura
         document.addEventListener("DOMContentLoaded", () => {
             actualizarTodo();
         });
