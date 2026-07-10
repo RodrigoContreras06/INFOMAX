@@ -100,7 +100,6 @@
             font-weight: bold;
         }
 
-        /* Clases CSS dinámicas para los estados */
         .ovulacion { background:#e63946; }
         .fertil { background:#2a9d8f; }
         .lutea { background:#6a4c93; }
@@ -263,7 +262,7 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Personas Registradas</div>
+        <div class="section-title">Personas Registered</div>
         <div id="listaPersonas"></div>
     </div> 
 
@@ -331,6 +330,18 @@
             document.getElementById("modalPersona").style.display = "none";
         }
 
+        function obtenerPrioridadEstado(idClave){
+            const prioridades = {
+                ovulacion: 1,
+                fertil: 2,
+                menstruacion: 3,
+                folicular: 4,
+                lutea: 5,
+                atraso: 6
+            };
+            return prioridades[idClave] || 99;
+        }
+
         function guardarPersona(){
             const nombre = document.getElementById("nombrePersona").value;
             const fecha = document.getElementById("fechaPeriodo").value;
@@ -352,7 +363,7 @@
             cerrarModal();
             document.getElementById("nombrePersona").value = "";
             document.getElementById("fechaPeriodo").value = "";
-
+            
             actualizarTodo();
         }
 
@@ -595,7 +606,26 @@
             let htmlAlertas = "";
             let conteos = { ovulacion: 0, fertil: 0, menstruacion: 0, lutea: 0, folicular: 0, atraso: 0 };
 
-            personas.forEach(persona => {
+            const personasOrdenadas = [...personas].sort((a, b) => {
+                const ultimoA = a.periodos[a.periodos.length - 1];
+                const ultimoB = b.periodos[b.periodos.length - 1];
+
+                const diaA = calcularDiaCiclo(ultimoA);
+                const diaB = calcularDiaCiclo(ultimoB);
+
+                const cicloA = calcularCicloPromedio(a.periodos);
+                const cicloB = calcularCicloPromedio(b.periodos);
+
+                const estadoA = obtenerEstado(diaA, cicloA);
+                const estadoB = obtenerEstado(diaB, cicloB);
+
+                return (
+                    obtenerPrioridadEstado(estadoA.idClave) -
+                    obtenerPrioridadEstado(estadoB.idClave)
+                ) || (diaB - diaA);
+            });
+
+            personasOrdenadas.forEach(persona => {
                 const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 const cicloUser = calcularCicloPromedio(persona.periodos);
