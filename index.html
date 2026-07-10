@@ -178,6 +178,12 @@
             gap:12px;
         }
 
+        .modal-title{
+            font-size:18px;
+            font-weight:bold;
+            margin-bottom:5px;
+        }
+
         .modal-content input{
             padding:10px;
             border:1px solid #ccc;
@@ -198,7 +204,7 @@
         }
 
         #contenidoHistorial {
-            max-height: 250px;
+            max-height: 280px;
             overflow-y: auto;
             padding-right: 5px;
         }
@@ -224,6 +230,70 @@
 
         .btn-periodo:hover{
             opacity:.9;
+        }
+
+        /* ESTILOS CALENDARIO INDIVIDUAL */
+        .calendario-grid{
+            display:grid;
+            grid-template-columns:repeat(7,1fr);
+            gap:4px;
+            text-align:center;
+            margin-top:10px;
+        }
+
+        .dia-semana{
+            font-weight:bold;
+            font-size:11px;
+            color:#666;
+            padding:5px 0;
+        }
+
+        .dia{
+            background:#f4f6f9;
+            border-radius:8px;
+            padding:4px 2px;
+            min-height:55px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+            align-items:center;
+            border: 1px solid #eee;
+        }
+
+        .dia.hoy{
+            background:#e8dbfc;
+            border:1px solid #7b2cbf;
+        }
+
+        .numero-dia{
+            font-size:12px;
+            font-weight:bold;
+        }
+
+        .evento{
+            font-size:8px;
+            padding:2px 4px;
+            border-radius:4px;
+            width:100%;
+            text-align:center;
+            font-weight:bold;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+
+        .evento-fertil{ background:#d8f3dc; color:#2a9d8f; }
+        .evento-ovulacion{ background:#fde2e4; color:#e63946; }
+        .evento-periodo{ background:#ffccd5; color:#ff4d6d; }
+
+        .resumen-calendario{
+            background:#f8f9fa;
+            padding:12px;
+            border-radius:10px;
+            margin-bottom:10px;
+            font-size:12px;
+            line-height:1.6;
+            text-align: left;
         }
 
         /* FILTROS Y GRID DEL DASHBOARD GENERAL */
@@ -408,7 +478,7 @@
             <label for="fechaPeriodo">Primer periodo registrado</label>
             <input type="date" id="fechaPeriodo">
             <button onclick="guardarPersona()">Guardar</button>
-            <button onclick="cerrarModal()">Cancelar</button>
+            <button onclick="cerrarModal()" style="background:#555; color:white;">Cancelar</button>
         </div>
     </div>
 
@@ -417,12 +487,12 @@
             <h2>Registrar Periodo</h2>
             <input type="date" id="fechaNuevoPeriodo">
             <button onclick="guardarNuevoPeriodo()">Guardar</button>
-            <button onclick="cerrarModalPeriodo()">Cancelar</button>
+            <button onclick="cerrarModalPeriodo()" style="background:#555; color:white;">Cancelar</button>
         </div>
     </div>
 
     <div id="modalHistorial" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:450px;">
             <h2 id="tituloHistorial">Historial</h2>
             <div id="contenidoHistorial"></div>
             <button onclick="cerrarHistorial()" style="background:#555; color:white;">Cerrar</button>
@@ -435,6 +505,15 @@
             <input type="date" id="fechaEditarPeriodo">
             <button onclick="guardarEdicionPeriodo()">Guardar cambios</button>
             <button onclick="cerrarModalEditar()" style="background:#555; color:white;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalCalendario" class="modal">
+        <div class="modal-content" style="max-width:450px;">
+            <div class="modal-title" id="tituloCalendario">📅 Calendario Proyecciones</div>
+            <div id="infoCalendario"></div>
+            <div id="calendarioMes"></div>
+            <button onclick="cerrarCalendario()" style="background:#555; color:white; padding:12px; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">Cerrar</button>
         </div>
     </div>
 
@@ -602,6 +681,89 @@
             return Math.round(sumaDias / cantidadCiclos);
         }
 
+        // REINCORPORADO: FUNCIONES PARA EL CALENDARIO INDIVIDUAL
+        function cerrarCalendario(){
+            document.getElementById("modalCalendario").style.display = "none";
+        }
+
+        function verCalendario(id){
+            const persona = personas.find(p => p.id === id);
+            if(!persona) return;
+
+            cerrarHistorial();
+
+            const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
+            const cicloPromedio = calcularCicloPromedio(persona.periodos);
+            const diaOvulacion = cicloPromedio - 14;
+            
+            const fechaPeriodo = new Date(ultimoPeriodo + 'T00:00:00');
+            const fechaOvulacion = new Date(fechaPeriodo);
+            fechaOvulacion.setDate(fechaOvulacion.getDate() + diaOvulacion - 1);
+
+            const inicioFertil = new Date(fechaOvulacion);
+            inicioFertil.setDate(inicioFertil.getDate() - 3);
+
+            const finFertil = new Date(fechaOvulacion);
+            finFertil.setDate(finFertil.getDate() + 2);
+
+            const proximoPeriodo = new Date(fechaPeriodo);
+            proximoPeriodo.setDate(proximoPeriodo.getDate() + cicloPromedio);
+
+            document.getElementById("tituloCalendario").innerHTML = "📅 " + persona.nombre;
+            document.getElementById("infoCalendario").innerHTML = `
+            <div class="resumen-calendario">
+                <strong>Ciclo promedio:</strong> ${cicloPromedio} días<br>
+                <strong>Ovulación:</strong> ${fechaOvulacion.toLocaleDateString('es-ES')}<br>
+                <strong>Ventana fértil:</strong> ${inicioFertil.toLocaleDateString('es-ES')} al ${finFertil.toLocaleDateString('es-ES')}<br>
+                <strong>Próximo periodo:</strong> ${proximoPeriodo.toLocaleDateString('es-ES')}
+            </div>
+            `;
+
+            generarCalendarioMes(inicioFertil, finFertil, fechaOvulacion, proximoPeriodo);
+            document.getElementById("modalCalendario").style.display = "flex";
+        }
+
+        function generarCalendarioMes(inicioFertil, finFertil, fechaOvulacion, proximoPeriodo){
+            const hoy = new Date();
+            const mes = hoy.getMonth();
+            const anio = hoy.getFullYear();
+
+            const primerDia = new Date(anio, mes, 1);
+            const ultimoDia = new Date(anio, mes + 1, 0);
+
+            let html = `<div class="calendario-grid">`;
+            const diasSemana = ["L","M","M","J","V","S","D"];
+            diasSemana.forEach(d => { html += `<div class="dia-semana">${d}</div>`; });
+
+            let offset = primerDia.getDay() === 0 ? 6 : primerDia.getDay() - 1;
+            for(let i = 0; i < offset; i++){ html += `<div></div>`; }
+
+            for(let dia = 1; dia <= ultimoDia.getDate(); dia++){
+                const fechaActual = new Date(anio, mes, dia);
+                let clase = "";
+                let evento = "";
+
+                if(fechaActual.toDateString() === hoy.toDateString()){ clase = "hoy"; }
+                if(fechaActual >= inicioFertil && fechaActual <= finFertil){
+                    evento = `<div class="evento evento-fertil">Fértil</div>`;
+                }
+                if(fechaActual.toDateString() === fechaOvulacion.toDateString()){
+                    evento = `<div class="evento evento-ovulacion">Ovulación</div>`;
+                }
+                if(fechaActual.toDateString() === proximoPeriodo.toDateString()){
+                    evento = `<div class="evento evento-periodo">Periodo</div>`;
+                }
+
+                html += `
+                <div class="dia ${clase}">
+                    <div class="numero-dia">${dia}</div>
+                    ${evento}
+                </div>`;
+            }
+            html += `</div>`;
+            document.getElementById("calendarioMes").innerHTML = html;
+        }
+
         function verHistorial(id){
             const persona = personas.find(p => p.id === id);
             if(!persona) return;
@@ -619,9 +781,10 @@
                         <div>📅 ${fechaLegible}</div>
                         <small style="color:#888;">${fecha}</small>
                     </div>
-                    <div style="display:flex; gap:5px;">
+                    <div style="display:flex; gap:5px; align-items:center;">
                         <button onclick="editarPeriodo(${persona.id}, '${fecha}')" style="background:#457b9d; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">✏️</button>
                         <button onclick="eliminarPeriodo(${persona.id}, '${fecha}')" style="background:#e63946; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">🗑</button>
+                        <button class="btn-periodo" style="background:#2a9d8f; padding:6px 12px; margin:0;" onclick="verCalendario(${persona.id})">📅 Vista</button>
                     </div>
                 </div>`;
             });
@@ -708,7 +871,6 @@
             renderizarCalendarioGlobal();
         }
 
-        // NUEVA FUNCIÓN: RENDERIZA EL CALENDARIO GLOBAL TIPO DASHBOARD
         function renderizarCalendarioGlobal() {
             const hoy = new Date();
             const mes = hoy.getMonth();
@@ -734,22 +896,19 @@
                 let claseDia = (fechaActual.toDateString() === hoy.toDateString()) ? "dash-dia hoy" : "dash-dia";
                 let tagsHtml = "";
 
-                // Buscar qué personas tienen eventos calculados en este día específico del mes
                 personas.forEach(persona => {
                     const ultimoPeriodo = persona.periodos[persona.periodos.length - 1];
                     const fechaBase = new Date(ultimoPeriodo + 'T00:00:00');
                     fechaBase.setHours(0,0,0,0);
 
-                    // Calcular diferencia en días exactos entre este casillero del calendario y su último periodo
                     const difTiempo = fechaActual - fechaBase;
                     const difDias = Math.floor(difTiempo / (1000 * 60 * 60 * 24));
                     const diaCicloEvaluado = difDias + 1;
 
                     if (diaCicloEvaluado >= 1) {
                         const cicloUser = calcularCicloPromedio(persona.periodos);
-                        const est = obtenerEstado(diaCicloEvaluated = diaCicloEvaluado, cicloUser);
+                        const est = obtenerEstado(diaCicloEvaluado, cicloUser);
 
-                        // Si pasa el filtro de pestaña seleccionado
                         if (filtroGlobalActivo === "todos" || est.idClave === filtroGlobalActivo) {
                             tagsHtml += `<div class="mini-tag ${est.clase}">${persona.nombre}</div>`;
                         }
@@ -855,7 +1014,6 @@
             document.getElementById("count-folicular").innerText = conteos.folicular;
             document.getElementById("count-atraso").innerText = conteos.atraso;
 
-            // Si la vista actual es el calendario global, refrescarlo también
             if (document.getElementById("vistaCalendarioG").style.display === "block") {
                 renderizarCalendarioGlobal();
             }
