@@ -16,7 +16,7 @@
         body{
             background:#f4f6f9;
             color:#222;
-            padding-bottom:80px;
+            padding-bottom:100px; /* Un poco más de espacio para la navegación */
         }
 
         .header{
@@ -128,6 +128,8 @@
         .nav-item{
             text-align:center;
             font-size:14px;
+            cursor: pointer;
+            flex: 1;
         }
 
         .fab{
@@ -226,47 +228,83 @@
         <p id="fechaActualHeader">Cargando fecha...</p>
     </div>
 
-    <div class="section">
-        <div class="section-title">⚠ Atención Hoy</div>
-        <div id="contenedorAlertas"></div>
-    </div>
+    <div id="vistaInicio">
+        <div class="section">
+            <div class="section-title">⚠ Atención Hoy</div>
+            <div id="contenedorAlertas"></div>
+        </div>
 
-    <div class="section">
-        <div class="section-title">Resumen General</div>
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-number" id="count-ovulacion">0</div>
-                <div>Ovulación</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="count-fertil">0</div>
-                <div>Ventana fértil</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="count-menstruacion">0</div>
-                <div>Menstruación</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="count-folicular">0</div>
-                <div>Folicular</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="count-lutea">0</div>
-                <div>Fase lútea</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="count-atraso">0</div>
-                <div>Retraso</div>
+        <div class="section">
+            <div class="section-title">Resumen General</div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="count-ovulacion">0</div>
+                    <div>Ovulación</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="count-fertil">0</div>
+                    <div>Ventana fértil</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="count-menstruacion">0</div>
+                    <div>Menstruación</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="count-folicular">0</div>
+                    <div>Folicular</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="count-lutea">0</div>
+                    <div>Fase lútea</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="count-atraso">0</div>
+                    <div>Retraso</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="section">
-        <div class="section-title">Personas Registered</div>
-        <div id="listaPersonas"></div>
-    </div> 
+    <div id="vistaPersonas" style="display:none;">
+        <div class="section">
+            <div class="section-title">Personas Registradas</div>
+            <div id="listaPersonas"></div>
+        </div>
+    </div>
+
+    <div id="vistaAjustes" style="display:none;">
+        <div class="section">
+            <div class="person-card">
+                <h3>Configuración</h3>
+                <br>
+                <button class="btn-periodo" onclick="exportarDatos()">
+                    💾 Exportar respaldo
+                </button>
+                <br><br>
+                <button class="btn-periodo" onclick="importarDatos()">
+                    📂 Importar respaldo
+                </button>
+                <br><br>
+                <button class="btn-periodo" style="background:#e63946;" onclick="borrarTodo()">
+                    🗑 Borrar todos los datos
+                </button>
+            </div>
+        </div>
+    </div>
 
     <button class="fab" onclick="abrirModal()">+</button>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="mostrarVista('inicio')">
+            🏠<br>Inicio
+        </div>
+        <div class="nav-item" onclick="mostrarVista('personas')">
+            👥<br>Personas
+        </div>
+        <div class="nav-item" onclick="mostrarVista('ajustes')">
+            ⚙️<br>Ajustes
+        </div>
+    </div>
 
     <div id="modalPersona" class="modal">
         <div class="modal-content">
@@ -308,12 +346,6 @@
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <div class="nav-item">🏠<br>Inicio</div>
-        <div class="nav-item">👥<br>Personas</div>
-        <div class="nav-item">⚙️<br>Ajustes</div>
-    </div>
-
     <script>
         let personas = JSON.parse(localStorage.getItem("personas")) || [];
         let personaSeleccionada = null;
@@ -340,6 +372,22 @@
                 atraso: 6
             };
             return prioridades[idClave] || 99;
+        }
+
+        function mostrarVista(vista){
+            document.getElementById("vistaInicio").style.display = "none";
+            document.getElementById("vistaPersonas").style.display = "none";
+            document.getElementById("vistaAjustes").style.display = "none";
+
+            if(vista === "inicio"){
+                document.getElementById("vistaInicio").style.display = "block";
+            }
+            if(vista === "personas"){
+                document.getElementById("vistaPersonas").style.display = "block";
+            }
+            if(vista === "ajustes"){
+                document.getElementById("vistaAjustes").style.display = "block";
+            }
         }
 
         function guardarPersona(){
@@ -705,6 +753,53 @@
             document.getElementById("count-lutea").innerText = conteos.lutea;
             document.getElementById("count-folicular").innerText = conteos.folicular;
             document.getElementById("count-atraso").innerText = conteos.atraso;
+        }
+
+        // FUNCIONES DE AJUSTES (Para evitar errores de ejecución)
+        function exportarDatos() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(personas));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "respaldo_ciclos.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importarDatos() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.readAsText(file,'UTF-8');
+                reader.onload = readerEvent => {
+                    try {
+                        const contenido = JSON.parse(readerEvent.target.result);
+                        if (Array.isArray(contenido)) {
+                            personas = contenido;
+                            localStorage.setItem("personas", JSON.stringify(personas));
+                            actualizarTodo();
+                            alert("Datos importados con éxito.");
+                        } else {
+                            alert("Formato de archivo no válido.");
+                        }
+                    } catch (error) {
+                        alert("Error al leer el archivo.");
+                    }
+                }
+            }
+            input.click();
+        }
+
+        function borrarTodo() {
+            if (confirm("¿Estás seguro de que deseas borrar absolutamente todos los datos? Esta acción no se puede deshacer.")) {
+                localStorage.removeItem("personas");
+                personas = [];
+                actualizarTodo();
+                mostrarVista('inicio');
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
