@@ -224,7 +224,7 @@
 
     <div class="header">
         <h1>Control de Ciclos</h1>
-        <p id="fechaActualHeader">04 Junio 2026</p>
+        <p id="fechaActualHeader">Cargando fecha...</p>
     </div>
 
     <div class="section">
@@ -374,7 +374,6 @@
 
             if(!persona.periodos.includes(fechaNueva)) {
                 persona.periodos.push(fechaNueva);
-                // Ordenar fechas cronológicamente de forma segura
                 persona.periodos.sort((a, b) => new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00'));
             }
 
@@ -386,8 +385,6 @@
         }
         
         function obtenerEstado(dia, cicloPromedio = 28){
-            // Se eliminó la doble declaración de diaOvulacion.
-            // Se calcula dinámicamente limitando límites razonables.
             const diaOvulacion = Math.max(10, Math.min(cicloPromedio - 14, cicloPromedio - 10));
             const inicioFertil = diaOvulacion - 3;
             const finFertil = diaOvulacion + 2;
@@ -419,7 +416,6 @@
         
         function calcularDiaCiclo(fecha){
             const hoy = new Date();
-            // Evitamos problemas de desfase horario forzando la interpretación UTC o medianoche local limpia
             const periodo = new Date(fecha + 'T00:00:00');
 
             hoy.setHours(0,0,0,0);
@@ -523,6 +519,24 @@
             });
         }
 
+        function eliminarPersona(idPersona){
+            const persona = personas.find(p => p.id === idPersona);
+            if(!persona) return;
+
+            const texto = prompt(`Escribe ELIMINAR para borrar a ${persona.nombre}`);
+            if(texto !== "ELIMINAR"){
+                return;
+            }
+            
+            const confirmar = confirm(`¿Eliminar completamente a ${persona.nombre}?\n\nEsta acción no se puede deshacer.`);
+            if(!confirmar) return;
+
+            personas = personas.filter(p => p.id !== idPersona);
+            localStorage.setItem("personas", JSON.stringify(personas));
+
+            actualizarTodo();
+        }
+
         function actualizarTodo(){
             let contenedor = document.getElementById("listaPersonas");
             let contenedorAlertas = document.getElementById("contenedorAlertas");
@@ -537,7 +551,6 @@
                 const diaCiclo = calcularDiaCiclo(ultimoPeriodo);
                 const cicloUser = calcularCicloPromedio(persona.periodos);
                 
-                // Corrección aquí: eliminamos la doble declaración eliminando un 'const' repetido
                 const diaOvulacion = cicloUser - 14;
 
                 const fechaOvulacion = new Date(ultimoPeriodo + 'T00:00:00');
@@ -591,8 +604,13 @@
                             <button class="btn-periodo" onclick="registrarPeriodo(${persona.id})">
                                 ➕ Periodo
                             </button>
+
                             <button class="btn-periodo" style="background:#457b9d;" onclick="verHistorial(${persona.id})">
                                 👁 Historial
+                            </button>
+
+                            <button class="btn-periodo" style="background:#e63946;" onclick="eliminarPersona(${persona.id})">
+                                🗑 Eliminar
                             </button>
                         </div>
                     </div>
@@ -611,8 +629,10 @@
             document.getElementById("count-atraso").innerText = conteos.atraso;
         }
 
-        // Ejecutar al cargar la página
-        actualizarTodo();
+        // Ejecutar al cargar la página de forma segura
+        document.addEventListener("DOMContentLoaded", () => {
+            actualizarTodo();
+        });
     </script>
 </body>
 </html>
